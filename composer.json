@@ -7,11 +7,16 @@
             "Isterkh\\QueryBuilder\\": "src/"
         }
     },
+    "autoload-dev": {
+        "Isterkh\\QueryBuilder\\Tests": "tests/"
+    },
     "authors": [
         {
             "name": "Ilya Sterkhov",
             "email": "sterkh96@gmail.com"
         }
     ],
-    "require": {}
+    "require-dev": {
+        "phpunit/phpunit": "^12"
+    }
 }

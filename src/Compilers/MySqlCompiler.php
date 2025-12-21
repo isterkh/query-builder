@@ -2,20 +2,23 @@
 declare(strict_types=1);
 
 
-namespace Isterkh\QueryBuilder\Compiler;
+namespace Isterkh\QueryBuilder\Compilers;
 
 use Isterkh\QueryBuilder\Clauses\WhereClause;
+use Isterkh\QueryBuilder\Compilers\DTO\CompiledQuery;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
-use Isterkh\QueryBuilder\Queries\SelectQuery;
+use Isterkh\QueryBuilder\Contracts\CompilerInterface;
+use Isterkh\QueryBuilder\Contracts\QueryInterface;
+use Isterkh\QueryBuilder\Queries\Query;
 
-class MySqlCompiler
+class MySqlCompiler implements CompilerInterface
 {
     public function __construct(
-        protected SelectQuery $query
+        protected Query $query
     )
     {
     }
-    public function compile(): array
+    public function compile(QueryInterface $query): CompiledQuery
     {
         $sql = sprintf(
             'SELECT %s FROM %s',

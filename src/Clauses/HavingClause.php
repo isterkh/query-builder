@@ -10,10 +10,9 @@ use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
 
-class WhereClause implements HasConditionInterface
+class HavingClause implements HasConditionInterface
 {
     use HasConditionTrait;
-
     public function __construct(
         bool $isOr = false
     )
@@ -21,7 +20,7 @@ class WhereClause implements HasConditionInterface
         $this->rootConditionGroup = new ConditionGroup($isOr);
     }
 
-    public function where(
+    public function having(
         string|Closure $column,
         mixed $operatorOrValue = null,
         mixed $value = null
@@ -30,9 +29,8 @@ class WhereClause implements HasConditionInterface
         return $this->add($column, $operatorOrValue, $value);
     }
 
-    public function orWhere(string|Closure $column, mixed $operatorOrValue = null, mixed $value = null): static
+    public function orHaving(string|Closure $column, mixed $operatorOrValue = null, mixed $value = null): static
     {
         return $this->add($column, $operatorOrValue, $value, true);
     }
-
 }
