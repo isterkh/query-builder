@@ -1,0 +1,17 @@
+{
+    "name": "isterkh/query-builder",
+    "description": "Simple SQL Query Builder",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Isterkh\\QueryBuilder\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Ilya Sterkhov",
+            "email": "sterkh96@gmail.com"
+        }
+    ],
+    "require": {}
+}
