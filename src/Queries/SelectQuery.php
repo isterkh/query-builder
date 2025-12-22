@@ -13,10 +13,13 @@ use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
+use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 use RuntimeException;
 
 class SelectQuery implements QueryInterface
 {
+
+    use WhereAliasTrait;
     protected FromClause $from;
     protected ?WhereClause $where = null;
     protected ?HavingClause $having = null;
@@ -37,13 +40,19 @@ class SelectQuery implements QueryInterface
 
     protected bool $isDistinct = false;
 
+
+    /**
+     * @param CompilerInterface $compiler
+     * @param array $columns
+     * @param array<string, QueryInterface> $cte
+     */
     public function __construct(
         protected CompilerInterface $compiler,
         protected array             $columns = ['*'],
+        protected array $cte = []
     )
     {
     }
-
     public function distinct(): static
     {
         $this->isDistinct = true;
@@ -99,56 +108,6 @@ class SelectQuery implements QueryInterface
         $this->getOrCreateWhere()->orWhere($column, $operatorOrValue, $value);
         return $this;
     }
-
-    public function whereIn(
-        string|Closure $column,
-        array          $values
-    ): static
-    {
-        $this->getOrCreateWhere()->where($column, 'IN', $values);
-        return $this;
-    }
-
-    public function whereNotIn(
-        string|Closure $column,
-        array          $values
-    ): static
-    {
-        $this->getOrCreateWhere()->where($column, 'NOT IN', $values);
-        return $this;
-    }
-
-    public function orWhereIn(
-        string|Closure $column,
-        array          $values
-    ): static
-    {
-        $this->getOrCreateWhere()->orWhere($column, 'IN', $values);
-        return $this;
-    }
-
-    public function orWhereNotIn(
-        string|Closure $column,
-        array          $values
-    ): static
-    {
-        $this->getOrCreateWhere()->orWhere($column, 'NOT IN', $values);
-        return $this;
-    }
-
-    public function whereBetween(string|Closure $column, int|string $value1, int|string $value2): static
-    {
-        $this->getOrCreateWhere()->where($column, 'BETWEEN', [$value1, $value2]);
-        return $this;
-    }
-
-    public function whereNotBetween(string|Closure $column, int|string $value1, int|string $value2): static
-    {
-        $this->getOrCreateWhere()->where($column, 'NOT BETWEEN', [$value1, $value2]);
-        return $this;
-    }
-
-
     public function groupBy(string ...$column): static
     {
         $this->groupBy = array_unique(
@@ -288,6 +247,11 @@ class SelectQuery implements QueryInterface
     protected function getCompiled(): CompiledQuery
     {
         return $this->compiledQuery ??= $this->compiler->compile($this);
+    }
+
+    public function getCte(): array
+    {
+        return $this->cte;
     }
 
 }

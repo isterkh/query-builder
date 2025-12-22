@@ -9,10 +9,12 @@ use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
+use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 
 class JoinClause implements HasConditionInterface
 {
     use HasConditionTrait;
+    use WhereAliasTrait;
     public function __construct(
         protected FromClause $from,
         protected JoinTypeEnum $type,

@@ -40,6 +40,7 @@ class SelectQueryCompiler implements CompilerInterface
         }
         return $this->mergeParts(
             ...array_filter([
+                $this->compileCte($query),
                 $this->compileSelect($query),
                 $this->compileJoins($query),
                 $this->compileWhere($query),
@@ -50,6 +51,26 @@ class SelectQueryCompiler implements CompilerInterface
                 $this->compileOffset($query),
             ])
         );
+    }
+
+    protected function compileCte(SelectQuery $query): ?CompiledQuery
+    {
+        $cte = $query->getCte();
+        if (empty($cte)) {
+            return null;
+        }
+        $parts = [];
+        $bindings = [];
+        foreach ($cte as $alias => $expr) {
+            $parts[] = "{$this->wrap($alias)} as ({$expr->toSql()})";
+            $bindings = array_merge($bindings, $expr->getBindings());
+        }
+        return new CompiledQuery(
+            'with ' . implode(', ', $parts),
+            $bindings,
+        );
+
+
     }
 
     protected function compileSelect(SelectQuery $query): CompiledQuery
