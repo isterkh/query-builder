@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Exceptions;
 
-class CompilerDoesNotSupportsQuery extends CompilerException
+class UnsupportedOperatorException extends CompilerException
 {
 
 }

@@ -6,10 +6,13 @@ namespace Isterkh\QueryBuilder\Queries;
 use Closure;
 use Isterkh\QueryBuilder\Clauses\FromClause;
 use Isterkh\QueryBuilder\Clauses\HavingClause;
+use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Clauses\WhereClause;
 use Isterkh\QueryBuilder\Compilers\DTO\CompiledQuery;
+use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
+use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use RuntimeException;
 
 class SelectQuery implements QueryInterface
@@ -17,8 +20,8 @@ class SelectQuery implements QueryInterface
     protected FromClause $from;
     protected ?WhereClause $where = null;
     protected ?HavingClause $having = null;
-    protected int $limit = 0;
-    protected int $offset = 0;
+    protected ?int $limit = null;
+    protected ?int $offset = null;
     /**
      * @var array<string, string> $orderBy
      */
@@ -30,6 +33,9 @@ class SelectQuery implements QueryInterface
 
     protected ?CompiledQuery $compiledQuery = null;
 
+    protected array $joins = [];
+
+    protected bool $isDistinct = false;
 
     public function __construct(
         protected CompilerInterface $compiler,
@@ -38,11 +44,41 @@ class SelectQuery implements QueryInterface
     {
     }
 
+    public function distinct(): static
+    {
+        $this->isDistinct = true;
+        return $this;
+    }
+
     public function from(string $table, ?string $alias = null): static
     {
         $this->from = new FromClause($table, $alias);
         return $this;
     }
+
+    public function join(string $table, Closure $condition, ?string $alias = null, JoinTypeEnum $type = JoinTypeEnum::INNER): static
+    {
+        $joinClause = new JoinClause(
+            new FromClause($table, $alias),
+            $type,
+            new ConditionGroup()
+        );
+        $condition($joinClause);
+        $this->joins[] = $joinClause;
+
+        return $this;
+    }
+
+    public function leftJoin(string $table, Closure $condition, ?string $alias = null): static
+    {
+        return $this->join($table, $condition, $alias, JoinTypeEnum::LEFT);
+    }
+
+    public function rightJoin(string $table, Closure $condition, ?string $alias = null): static
+    {
+        return $this->join($table, $condition, $alias, JoinTypeEnum::RIGHT);
+    }
+
 
     public function where(
         string|Closure $column,
@@ -142,10 +178,10 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
-    public function orderBy(string $column, string $direction = 'ASC'): static
+    public function orderBy(string $column, string $direction = 'asc'): static
     {
-        $dir = strtoupper($direction);
-        if (!in_array($dir, ['ASC', 'DESC'])) {
+        $dir = strtolower($direction);
+        if (!in_array($dir, ['asc', 'desc'])) {
             throw new RuntimeException("Invalid direction [$dir]");
         }
         $this->orderBy[$column] = $dir;
@@ -185,17 +221,25 @@ class SelectQuery implements QueryInterface
         return $this->where;
     }
 
+    /**
+     * @return array<JoinClause>
+     */
+    public function getJoins(): array
+    {
+        return $this->joins;
+    }
+
     public function getHaving(): ?HavingClause
     {
         return $this->having;
     }
 
-    public function getLimit(): int
+    public function getLimit(): ?int
     {
         return $this->limit;
     }
 
-    public function getOffset(): int
+    public function getOffset(): ?int
     {
         return $this->offset;
     }
@@ -221,14 +265,24 @@ class SelectQuery implements QueryInterface
         return $this->getCompiled()->bindings;
     }
 
+
     protected function getOrCreateWhere(): WhereClause
     {
-        return $this->where ??= new WhereClause();
+        return $this->where ??= new WhereClause(
+            new ConditionGroup()
+        );
     }
 
     public function getOrCreateHaving(): HavingClause
     {
-        return $this->having ??= new HavingClause();
+        return $this->having ??= new HavingClause(
+            new ConditionGroup()
+        );
+    }
+
+    public function isDistinct(): bool
+    {
+        return $this->isDistinct;
     }
 
     protected function getCompiled(): CompiledQuery

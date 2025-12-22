@@ -10,24 +10,23 @@ use Isterkh\QueryBuilder\Condition\ConditionGroup;
 
 trait HasConditionTrait
 {
-    protected ConditionGroup $rootConditionGroup;
-
     protected function add(
         string|Closure $column,
         mixed $operatorOrValue = null,
         mixed $value = null,
-        bool $isOr = false
+        bool $isOr = false,
+        bool $rightIsColumn = false
     ): static
     {
         if ($column instanceof Closure) {
-            $subClause = new static();
+            $subClause = new static(new ConditionGroup());
             $column($subClause);
             $this->addCondition($subClause->getConditions(), $isOr);
             return $this;
         }
 
         [$operator, $value] = $this->parseOperatorValue($operatorOrValue, $value);
-        $condition = new Condition($column, $operator, $value);
+        $condition = new Condition($column, $operator, $value, $rightIsColumn);
         return $this->addCondition($condition, $isOr);
     }
     protected function addCondition(Condition|ConditionGroup $condition, bool $isOr = false): static
@@ -35,21 +34,21 @@ trait HasConditionTrait
 
         $condition = $this->squashCondition($condition);
         if (!$isOr) {
-            $this->rootConditionGroup->add($condition);
+            $this->getConditions()->add($condition);
             return $this;
         }
-        $last = $this->rootConditionGroup->getLast();
+        $last = $this->getConditions()->getLast();
         if ($last instanceof ConditionGroup && $last->isOr()) {
             $last->add($condition);
             return $this;
         }
         $orGroup = new ConditionGroup(true);
         if ($last !== null) {
-            $this->rootConditionGroup->pop();
+            $this->getConditions()->pop();
             $orGroup->add($last);
         }
         $orGroup->add($condition);
-        $this->rootConditionGroup->add($orGroup);
+        $this->getConditions()->add($orGroup);
         return $this;
 
     }
@@ -74,11 +73,6 @@ trait HasConditionTrait
         return $condition instanceof ConditionGroup && count($condition->getConditions()) === 1
             ? $condition->getConditions()[array_key_first($condition->getConditions())]
             : $condition;
-    }
-
-    public function getConditions(): ConditionGroup
-    {
-        return $this->rootConditionGroup;
     }
 
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Exceptions;
 
-class CompilerNotFoundException extends \RuntimeException
+class CompilerNotFoundException extends CompilerException
 {
 
 }

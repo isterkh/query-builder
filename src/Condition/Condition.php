@@ -9,9 +9,11 @@ class Condition
     public function __construct(
         protected string $column,
         protected string $operator,
-        protected mixed $value
+        protected mixed $value,
+        protected bool $rightIsColumn = false
     )
     {
+        $this->operator = trim(strtolower($this->operator));
     }
 
     public function getColumn(): string
@@ -25,5 +27,9 @@ class Condition
     public function getValue(): mixed
     {
         return $this->value;
+    }
+
+    public function isRightIsColumn(): bool {
+        return $this->rightIsColumn;
     }
 }

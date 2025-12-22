@@ -15,10 +15,10 @@ class WhereClause implements HasConditionInterface
     use HasConditionTrait;
 
     public function __construct(
-        bool $isOr = false
+        protected ConditionGroup $conditions
     )
     {
-        $this->rootConditionGroup = new ConditionGroup($isOr);
+
     }
 
     public function where(
@@ -33,6 +33,11 @@ class WhereClause implements HasConditionInterface
     public function orWhere(string|Closure $column, mixed $operatorOrValue = null, mixed $value = null): static
     {
         return $this->add($column, $operatorOrValue, $value, true);
+    }
+
+    public function getConditions(): ConditionGroup
+    {
+        return $this->conditions;
     }
 
 }

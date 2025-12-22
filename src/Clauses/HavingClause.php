@@ -14,10 +14,9 @@ class HavingClause implements HasConditionInterface
 {
     use HasConditionTrait;
     public function __construct(
-        bool $isOr = false
-    )
-    {
-        $this->rootConditionGroup = new ConditionGroup($isOr);
+        protected ConditionGroup $conditions
+    ) {
+
     }
 
     public function having(
@@ -32,5 +31,10 @@ class HavingClause implements HasConditionInterface
     public function orHaving(string|Closure $column, mixed $operatorOrValue = null, mixed $value = null): static
     {
         return $this->add($column, $operatorOrValue, $value, true);
+    }
+
+    public function getConditions(): ConditionGroup
+    {
+        return $this->conditions;
     }
 }
