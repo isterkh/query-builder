@@ -8,7 +8,9 @@
         }
     },
     "autoload-dev": {
-        "Isterkh\\QueryBuilder\\Tests": "tests/"
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
     },
     "authors": [
         {

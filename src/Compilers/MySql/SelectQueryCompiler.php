@@ -120,7 +120,7 @@ class SelectQueryCompiler implements CompilerInterface
         foreach ($query->getColumns() as $i => $column) {
             if ($column instanceof Expression) {
                 $columns[] = $column->sql;
-                $bindings = [...$bindings, $column->bindings];
+                $bindings = [...$bindings, ...$column->bindings];
                 continue;
             }
             if (is_string($i)) {
@@ -137,7 +137,7 @@ class SelectQueryCompiler implements CompilerInterface
             'from',
             $this->compileFrom($query->getFrom())
         ]);
-        return new Expression(implode(' ', $parts));
+        return new Expression(implode(' ', $parts), $bindings);
     }
 
     protected function compileFrom(FromClause $from): string

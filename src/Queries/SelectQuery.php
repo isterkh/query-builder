@@ -87,18 +87,37 @@ class SelectQuery implements QueryInterface
 
     protected function normalizeColumns(array $columns): array
     {
+        if (count($columns) === 1 && is_array($columns[0])) {
+            $columns = $columns[0];
+        }
         if (empty($columns)) {
             return ['*'];
         }
-        if (count($columns) === 1 && is_array($columns[0])) {
-            return $columns[0];
-        }
-        foreach ($columns as $key => $column) {
-            if (!is_string($column) || !(is_int($key) || is_string($key))) {
-                throw new InvalidArgumentException('Wrong argument');
+        $result = [];
+        foreach ($columns as $column) {
+            if (empty($column)) {
+                $result[] = '*';
+                continue;
+            }
+            if (is_string($column)) {
+                $result[] = trim($column) ?: '*';
+                continue;
+            }
+            foreach ($column as $index => $columnOrAlias) {
+                if (!is_string($columnOrAlias)
+                    || (is_string($index) && empty($columnOrAlias))) {
+                    throw new InvalidArgumentException('Column must be a string or key-value array');
+                }
+                $columnOrAlias = trim($columnOrAlias) ?: '*';
+                if (is_int($index)) {
+                    $result[] = $columnOrAlias;
+                } else {
+                    $index = trim($index) ?: '*';
+                    $result[] = "{$index} as {$columnOrAlias}";
+                }
             }
         }
-        return $columns;
+        return $result;
     }
 
     public function distinct(): static
@@ -226,9 +245,7 @@ class SelectQuery implements QueryInterface
             throw new RuntimeException('Limit should be greater than 0');
         }
         $param = empty($this->unions) ? 'limit' : 'unionLimit';
-        if ($param !== 'limit') {
-            var_dump($param);
-        }
+
         $this->{$param} = $limit;
         return $this;
     }
