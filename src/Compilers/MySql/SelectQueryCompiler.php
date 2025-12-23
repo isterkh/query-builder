@@ -54,8 +54,17 @@ class SelectQueryCompiler implements CompilerInterface
         ]);
 
         $unions = $this->compileUnions($query);
+
         if ($unions) {
             $main = $main->wrap();
+
+            $unions = $unions->merge(
+                $this->buildExpression([
+                    $this->compileLimit($query, true),
+                    $this->compileOffset($query, true),
+                    $this->compileOrderBy($query, true)
+                ])
+            );
         }
         return $this->buildExpression([$cte, $main, $unions]);
     }
@@ -64,7 +73,7 @@ class SelectQueryCompiler implements CompilerInterface
     {
         $filtered = array_filter($expressions);
         if (empty($filtered)) {
-            throw new CompilerException('Empty expressions list');
+            return new Expression('');
         }
         return Expression::fromExpressions(...$filtered);
     }
@@ -173,32 +182,33 @@ class SelectQueryCompiler implements CompilerInterface
     }
 
 
-    protected function compileLimit(SelectQuery $query): ?Expression
+    protected function compileLimit(SelectQuery $query, bool $union = false): ?Expression
     {
-        if ($query->getLimit() === null) {
+        $limit = $union ? $query->getUnionLimit() : $query->getLimit();
+        if ($limit === null) {
             return null;
         }
-        return new Expression('limit ' . $query->getLimit());
+        return new Expression('limit ' . $limit);
     }
 
-    protected function compileOffset(SelectQuery $query): ?Expression
+    protected function compileOffset(SelectQuery $query, bool $union = false): ?Expression
     {
-        $offset = $query->getOffset();
+        $offset = $union ? $query->getUnionOffset() : $query->getOffset();
         if ($offset === null || $offset <= 0) {
             return null;
         }
-        return new Expression('offset ' . $query->getOffset());
-
+        return new Expression('offset ' . $offset);
     }
 
-    protected function compileOrderBy(SelectQuery $query): ?Expression
+    protected function compileOrderBy(SelectQuery $query, bool $union = false): ?Expression
     {
-        if (empty($query->getOrderBy())) {
+        $orderBy = $union ? $query->getUnionOrderBy() : $query->getOrderBy();
+        if (empty($orderBy)) {
             return null;
         }
         $parts = [];
         $bindings = [];
-        foreach ($query->getOrderBy() as $column => $direction) {
+        foreach ($orderBy as $column => $direction) {
             if ($direction instanceof Expression) {
                 $parts[] = $direction->sql;
                 $bindings = [...$bindings, ...$direction->bindings];
@@ -217,7 +227,7 @@ class SelectQueryCompiler implements CompilerInterface
         }
         $parts = [];
         $bindings = [];
-        foreach($query->getGroupBy() as $column => $value) {
+        foreach ($query->getGroupBy() as $column => $value) {
             if ($value instanceof Expression) {
                 $parts[] = $value->sql;
                 $bindings = [...$bindings, ...$value->bindings];

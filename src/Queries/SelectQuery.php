@@ -52,6 +52,10 @@ class SelectQuery implements QueryInterface
 
     protected array $columns = [];
 
+    protected ?int $unionLimit = null;
+    protected ?int $unionOffset = null;
+    protected array $unionOrderBy = [];
+
 
     /**
      * @param CompilerInterface $compiler
@@ -204,13 +208,15 @@ class SelectQuery implements QueryInterface
         if (!in_array($dir, ['asc', 'desc'])) {
             throw new RuntimeException("Invalid direction [$dir]");
         }
-        $this->orderBy[$column] = $dir;
+        $param = empty($this->unions) ? 'orderBy' : 'unionOrderBy';
+        $this->{$param}[$column] = $dir;
         return $this;
     }
 
     public function orderByRaw(string $sql, array $bindings = []): static
     {
-        $this->orderBy[] = new Expression($sql, $bindings);
+        $param = empty($this->unions) ? 'orderBy' : 'unionOrderBy';
+        $this->{$param}[] = new Expression($sql, $bindings);
         return $this;
     }
 
@@ -219,7 +225,11 @@ class SelectQuery implements QueryInterface
         if ($limit < 0) {
             throw new RuntimeException('Limit should be greater than 0');
         }
-        $this->limit = $limit;
+        $param = empty($this->unions) ? 'limit' : 'unionLimit';
+        if ($param !== 'limit') {
+            var_dump($param);
+        }
+        $this->{$param} = $limit;
         return $this;
     }
 
@@ -228,7 +238,8 @@ class SelectQuery implements QueryInterface
         if ($offset < 0) {
             throw new RuntimeException('Offset should be greater than 0');
         }
-        $this->offset = $offset;
+        $param = empty($this->unions) ? 'offset' : 'unionOffset';
+        $this->{$param} = $offset;
         return $this;
     }
 
@@ -277,16 +288,30 @@ class SelectQuery implements QueryInterface
     {
         return $this->limit;
     }
+    public function getUnionLimit(): ?int
+    {
+        return $this->unionLimit;
+    }
+
 
     public function getOffset(): ?int
     {
         return $this->offset;
+    }
+    public function getUnionOffset(): ?int
+    {
+        return $this->unionOffset;
     }
 
     public function getOrderBy(): array
     {
         return $this->orderBy;
     }
+    public function getUnionOrderBy(): array
+    {
+        return $this->unionOrderBy;
+    }
+
 
     public function getGroupBy(): array
     {
