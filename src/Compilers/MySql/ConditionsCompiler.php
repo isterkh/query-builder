@@ -53,8 +53,11 @@ class ConditionsCompiler
         return new Expression(implode($separator, $parts), $bindings);
     }
 
-    protected function compileSingleCondition(Condition $condition): Expression
+    protected function compileSingleCondition(Condition|Expression $condition): Expression
     {
+        if ($condition instanceof Expression) {
+            return $condition;
+        }
         $operator = $condition->getOperator();
         $this->ensureOperatorIsSupported($operator);
 

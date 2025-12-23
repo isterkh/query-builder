@@ -32,6 +32,10 @@ class HavingClause implements HasConditionInterface
     {
         return $this->add($column, $operatorOrValue, $value, true);
     }
+    public function havingRaw(string $sql, array $bindings = []): static
+    {
+        return $this->add($this->rawExpression($sql, $bindings));
+    }
 
     public function getConditions(): ConditionGroup
     {

@@ -7,17 +7,23 @@ namespace Isterkh\QueryBuilder\Traits;
 use Closure;
 use Isterkh\QueryBuilder\Condition\Condition;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
+use Isterkh\QueryBuilder\Expressions\Expression;
 
 trait HasConditionTrait
 {
+    use RawExpressionTrait;
     protected function add(
-        string|Closure $column,
+        string|Expression|Closure $column,
         mixed $operatorOrValue = null,
         mixed $value = null,
         bool $isOr = false,
         bool $rightIsColumn = false
     ): static
     {
+        if ($column instanceof Expression) {
+            $this->addCondition($column, $isOr);
+            return $this;
+        }
         if ($column instanceof Closure) {
             $subClause = new static(new ConditionGroup());
             $column($subClause);
@@ -29,7 +35,7 @@ trait HasConditionTrait
         $condition = new Condition($column, $operator, $value, $rightIsColumn);
         return $this->addCondition($condition, $isOr);
     }
-    protected function addCondition(Condition|ConditionGroup $condition, bool $isOr = false): static
+    protected function addCondition(Condition|Expression|ConditionGroup $condition, bool $isOr = false): static
     {
 
         $condition = $this->squashCondition($condition);
@@ -68,7 +74,7 @@ trait HasConditionTrait
         return [$operator, $value];
     }
 
-    protected function squashCondition(Condition|ConditionGroup $condition): ConditionGroup|Condition
+    protected function squashCondition(Condition|Expression|ConditionGroup $condition): ConditionGroup|Condition|Expression
     {
         return $condition instanceof ConditionGroup && count($condition->getConditions()) === 1
             ? $condition->getConditions()[array_key_first($condition->getConditions())]

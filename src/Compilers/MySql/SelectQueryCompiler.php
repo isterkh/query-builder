@@ -107,8 +107,13 @@ class SelectQueryCompiler implements CompilerInterface
     protected function compileSelect(SelectQuery $query): Expression
     {
         $columns = [];
+        $bindings = [];
         foreach ($query->getColumns() as $i => $column) {
-
+            if ($column instanceof Expression) {
+                $columns[] = $column->sql;
+                $bindings = [...$bindings, $column->bindings];
+                continue;
+            }
             if (is_string($i)) {
                 $colName = "$i as $column";
             } else {

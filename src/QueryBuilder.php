@@ -31,7 +31,8 @@ class QueryBuilder
 
     public function select(array|string ...$columns): SelectQuery
     {
-        return new SelectQuery($this->compiler, $this->cte);
+        return new SelectQuery($this->compiler, $this->cte)
+            ->select($columns);
     }
 
 

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Condition;
 
+use Isterkh\QueryBuilder\Expressions\Expression;
+
 class ConditionGroup
 {
 
@@ -14,7 +16,7 @@ class ConditionGroup
     {
     }
 
-    public function add(Condition|ConditionGroup $condition): static
+    public function add(Condition|ConditionGroup|Expression $condition): static
     {
         $this->conditions[] = $condition;
         return $this;
@@ -30,7 +32,7 @@ class ConditionGroup
         return $this->isOr;
     }
 
-    public function getLast(): null|Condition|ConditionGroup
+    public function getLast(): null|Condition|ConditionGroup|Expression
     {
         return $this->conditions[array_key_last($this->conditions)] ?? null;
     }

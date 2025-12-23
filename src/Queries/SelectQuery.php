@@ -72,6 +72,11 @@ class SelectQuery implements QueryInterface
         $this->columns = $this->normalizeColumns($columns);
         return $this;
     }
+    public function selectRaw(string $sql, array $bindings = []): static
+    {
+        $this->columns[] = new Expression($sql, $bindings);
+        return $this;
+    }
 
     protected function normalizeColumns(array $columns): array
     {
@@ -144,6 +149,12 @@ class SelectQuery implements QueryInterface
         $this->getOrCreateWhere()->orWhere($column, $operatorOrValue, $value);
         return $this;
     }
+
+    public function whereRaw(string $sql, array $bindings = []): static
+    {
+        $this->getOrCreateWhere()->whereRaw($sql, $bindings);
+        return $this;
+    }
     public function groupBy(string ...$column): static
     {
         $this->groupBy = array_unique(
@@ -160,6 +171,11 @@ class SelectQuery implements QueryInterface
     {
         $this->getOrCreateHaving()->having($column, $operatorOrValue, $value);
 
+        return $this;
+    }
+    public function havingRaw(string $sql, array $bindings = []): static
+    {
+        $this->getOrCreateHaving()->havingRaw($sql, $bindings);
         return $this;
     }
 
