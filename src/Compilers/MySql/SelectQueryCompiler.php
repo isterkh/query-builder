@@ -197,11 +197,17 @@ class SelectQueryCompiler implements CompilerInterface
             return null;
         }
         $parts = [];
+        $bindings = [];
         foreach ($query->getOrderBy() as $column => $direction) {
+            if ($direction instanceof Expression) {
+                $parts[] = $direction->sql;
+                $bindings = [...$bindings, ...$direction->bindings];
+                continue;
+            }
             $column = $this->wrap($column);
             $parts[] = "{$column} {$direction}";
         }
-        return new Expression('order by ' . implode(', ', $parts));
+        return new Expression('order by ' . implode(', ', $parts), $bindings);
     }
 
     protected function compileGroupBy(SelectQuery $query): ?Expression
@@ -209,10 +215,18 @@ class SelectQueryCompiler implements CompilerInterface
         if (empty($query->getGroupBy())) {
             return null;
         }
+        $parts = [];
+        $bindings = [];
+        foreach($query->getGroupBy() as $column => $value) {
+            if ($value instanceof Expression) {
+                $parts[] = $value->sql;
+                $bindings = [...$bindings, ...$value->bindings];
+                continue;
+            }
+            $parts[] = $this->wrap($column);
 
-        $groupBy = array_map(fn($col) => $this->wrap($col), array_unique($query->getGroupBy()));
-
-        return new Expression('group by ' . implode(', ', $groupBy));
+        }
+        return new Expression('group by ' . implode(', ', $parts), $bindings);
     }
 
     protected function mergeParts(Expression ...$parts): Expression

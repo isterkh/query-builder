@@ -28,11 +28,14 @@ class SelectQuery implements QueryInterface
     protected ?int $limit = null;
     protected ?int $offset = null;
     /**
-     * @var array<string, string> $orderBy
+     * @var array<int|string, string|Expression> $orderBy
      */
     protected array $orderBy = [];
     /**
-     * @var array<int, string>
+     * @var array<int, string|Expression>
+     */
+    /**
+     * @var array<int|string, string|Expression>
      */
     protected array $groupBy = [];
 
@@ -155,13 +158,19 @@ class SelectQuery implements QueryInterface
         $this->getOrCreateWhere()->whereRaw($sql, $bindings);
         return $this;
     }
-    public function groupBy(string ...$column): static
+    public function groupBy(string ...$columns): static
     {
-        $this->groupBy = array_unique(
-            array_merge($this->groupBy, $column),
-        );
+        foreach ($columns as $column) {
+            $this->groupBy[$column] = $column;
+        }
         return $this;
     }
+    public function groupByRaw(string $sql, array $bindings = []): static
+    {
+        $this->groupBy[] = new Expression($sql, $bindings);
+        return $this;
+    }
+
 
     public function having(
         string|Closure $column,
@@ -196,6 +205,12 @@ class SelectQuery implements QueryInterface
             throw new RuntimeException("Invalid direction [$dir]");
         }
         $this->orderBy[$column] = $dir;
+        return $this;
+    }
+
+    public function orderByRaw(string $sql, array $bindings = []): static
+    {
+        $this->orderBy[] = new Expression($sql, $bindings);
         return $this;
     }
 
