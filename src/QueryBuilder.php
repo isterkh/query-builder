@@ -31,23 +31,9 @@ class QueryBuilder
 
     public function select(array|string ...$columns): SelectQuery
     {
-        return new SelectQuery($this->compiler, $this->normalizeColumns($columns), $this->cte);
+        return new SelectQuery($this->compiler, $this->cte);
     }
 
 
-    protected function normalizeColumns(array $columns): array
-    {
-        if (empty($columns)) {
-            return ['*'];
-        }
-        if (count($columns) === 1 && is_array($columns[0])) {
-            return $columns[0];
-        }
-        foreach ($columns as $key => $column) {
-            if (!is_string($column) || !(is_int($key) || is_string($key))) {
-                throw new InvalidArgumentException('Wrong argument');
-            }
-        }
-        return $columns;
-    }
+
 }

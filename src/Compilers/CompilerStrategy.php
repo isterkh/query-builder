@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Isterkh\QueryBuilder\Compilers;
 
 use Closure;
-use Isterkh\QueryBuilder\Compilers\DTO\CompiledQuery;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerNotFoundException;
+use Isterkh\QueryBuilder\Expressions\Expression;
 use RuntimeException;
 
 class CompilerStrategy implements CompilerInterface
@@ -35,7 +35,7 @@ class CompilerStrategy implements CompilerInterface
         return $this;
     }
 
-    public function compile(QueryInterface $query): CompiledQuery
+    public function compile(QueryInterface $query): Expression
     {
         foreach ($this->factories as $i => $factory) {
             $compiler = $this->getCompiler($i);

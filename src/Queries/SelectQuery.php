@@ -4,15 +4,17 @@ declare(strict_types=1);
 namespace Isterkh\QueryBuilder\Queries;
 
 use Closure;
+use InvalidArgumentException;
 use Isterkh\QueryBuilder\Clauses\FromClause;
 use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
+use Isterkh\QueryBuilder\Clauses\UnionClause;
 use Isterkh\QueryBuilder\Clauses\WhereClause;
-use Isterkh\QueryBuilder\Compilers\DTO\CompiledQuery;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
+use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 use RuntimeException;
 
@@ -34,11 +36,18 @@ class SelectQuery implements QueryInterface
      */
     protected array $groupBy = [];
 
-    protected ?CompiledQuery $compiledQuery = null;
+    protected ?Expression $compiledQuery = null;
 
     protected array $joins = [];
 
+    /**
+     * @var array<int, UnionClause>
+     */
+    protected array $unions = [];
+
     protected bool $isDistinct = false;
+
+    protected array $columns = [];
 
 
     /**
@@ -48,11 +57,38 @@ class SelectQuery implements QueryInterface
      */
     public function __construct(
         protected CompilerInterface $compiler,
-        protected array             $columns = ['*'],
         protected array $cte = []
     )
     {
     }
+
+    protected function newInstance(): static
+    {
+        return new static($this->compiler);
+    }
+
+    public function select(array|string ...$columns): static
+    {
+        $this->columns = $this->normalizeColumns($columns);
+        return $this;
+    }
+
+    protected function normalizeColumns(array $columns): array
+    {
+        if (empty($columns)) {
+            return ['*'];
+        }
+        if (count($columns) === 1 && is_array($columns[0])) {
+            return $columns[0];
+        }
+        foreach ($columns as $key => $column) {
+            if (!is_string($column) || !(is_int($key) || is_string($key))) {
+                throw new InvalidArgumentException('Wrong argument');
+            }
+        }
+        return $columns;
+    }
+
     public function distinct(): static
     {
         $this->isDistinct = true;
@@ -165,6 +201,19 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    public function union(Closure $callback, bool $isAll = false): static
+    {
+        $union = $this->newInstance();
+        $callback($union);
+        $this->unions[] = new UnionClause($union, $isAll);
+        return $this;
+    }
+
+    public function unionAll(Closure $callback): static
+    {
+        return $this->union($callback, true);
+    }
+
     public function getColumns(): array
     {
         return $this->columns;
@@ -244,7 +293,7 @@ class SelectQuery implements QueryInterface
         return $this->isDistinct;
     }
 
-    protected function getCompiled(): CompiledQuery
+    protected function getCompiled(): Expression
     {
         return $this->compiledQuery ??= $this->compiler->compile($this);
     }
@@ -252,6 +301,11 @@ class SelectQuery implements QueryInterface
     public function getCte(): array
     {
         return $this->cte;
+    }
+
+    public function getUnions(): array
+    {
+        return $this->unions;
     }
 
 }

@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers\MySql;
 
-use Isterkh\QueryBuilder\Compilers\DTO\CompiledQuery;
 use Isterkh\QueryBuilder\Condition\Condition;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Exceptions\UnsupportedOperatorException;
+use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WrapColumnsTrait;
 
 class ConditionsCompiler
@@ -32,7 +32,7 @@ class ConditionsCompiler
         '=', '!=', '<>'
     ];
 
-    public function compile(ConditionGroup $conditionGroup): CompiledQuery
+    public function compile(ConditionGroup $conditionGroup): Expression
     {
         $parts = [];
         $bindings = [];
@@ -50,10 +50,10 @@ class ConditionsCompiler
         }
         $separator = $conditionGroup->isOr() ? ' or ' : ' and ';
 
-        return new CompiledQuery(implode($separator, $parts), $bindings);
+        return new Expression(implode($separator, $parts), $bindings);
     }
 
-    protected function compileSingleCondition(Condition $condition): CompiledQuery
+    protected function compileSingleCondition(Condition $condition): Expression
     {
         $operator = $condition->getOperator();
         $this->ensureOperatorIsSupported($operator);
@@ -82,52 +82,52 @@ class ConditionsCompiler
         return $this->compileDefault($preparedCondition);
     }
 
-    protected function compileNull(Condition $condition): CompiledQuery
+    protected function compileNull(Condition $condition): Expression
     {
         $operator = $condition->getOperator() === '=' ? 'is' : 'is not';
-        return new CompiledQuery("{$condition->getColumn()} {$operator} null");
+        return new Expression("{$condition->getColumn()} {$operator} null");
     }
 
-    protected function compileBetween(Condition $condition): CompiledQuery
+    protected function compileBetween(Condition $condition): Expression
     {
         $value = $condition->getValue();
         if (count($value) !== 2) {
             throw new CompilerException("There must be exactly two values for between condition");
         }
         if ($condition->isRightIsColumn()) {
-            return new CompiledQuery(
+            return new Expression(
                 "{$condition->getColumn()} {$condition->getOperator()} {$value[0]} and {$value[1]}"
             );
         }
 
-        return new CompiledQuery(
+        return new Expression(
             "{$condition->getColumn()} {$condition->getOperator()} ? and ?",
             $value
         );
 
     }
 
-    protected function compileIn(Condition $condition): CompiledQuery
+    protected function compileIn(Condition $condition): Expression
     {
         $value = $condition->getValue();
         if (empty($value)) {
-            return new CompiledQuery('');
+            return new Expression('');
         }
         $placeholders = implode(', ', array_fill(0, count($value), '?'));
-        return new CompiledQuery(
+        return new Expression(
             "{$condition->getColumn()} {$condition->getOperator()} ({$placeholders})",
             $value
         );
     }
 
-    protected function compileDefault(Condition $condition): CompiledQuery
+    protected function compileDefault(Condition $condition): Expression
     {
         if ($condition->isRightIsColumn()) {
-            return new CompiledQuery(
+            return new Expression(
                 "{$condition->getColumn()} {$condition->getOperator()} {$condition->getValue()}"
             );
         }
-        return new CompiledQuery(
+        return new Expression(
             "{$condition->getColumn()} {$condition->getOperator()} ?",
             [$condition->getValue()]
         );
