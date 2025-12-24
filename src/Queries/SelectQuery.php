@@ -1,10 +1,9 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Queries;
 
-use Closure;
-use InvalidArgumentException;
 use Isterkh\QueryBuilder\Clauses\FromClause;
 use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
@@ -12,15 +11,12 @@ use Isterkh\QueryBuilder\Clauses\UnionClause;
 use Isterkh\QueryBuilder\Clauses\WhereClause;
 use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
-use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
-use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
-use RuntimeException;
 
 class SelectQuery implements LazyQueryInterface
 {
@@ -33,21 +29,23 @@ class SelectQuery implements LazyQueryInterface
      */
     protected array $columns = [];
     protected bool $isDistinct = false;
+
     /**
      * @var JoinClause[]
      */
     protected array $joins = [];
     protected ?WhereClause $where = null;
+
     /**
-     * @var array<int|string, string|Expression>
+     * @var array<int|string, Expression|string>
      */
     protected array $groupBy = [];
     protected ?HavingClause $having = null;
+
     /**
-     * @var array<int|string, string|Expression> $orderBy
+     * @var array<int|string, Expression|string>
      */
     protected array $orderBy = [];
-
 
     protected ?int $limit = null;
 
@@ -59,7 +57,7 @@ class SelectQuery implements LazyQueryInterface
     protected array $unions = [];
 
     /**
-     * @var array<int|string, string|Expression> $unionOrderBy
+     * @var array<int|string, Expression|string>
      */
     protected array $unionOrderBy = [];
     protected ?int $unionLimit = null;
@@ -68,100 +66,52 @@ class SelectQuery implements LazyQueryInterface
     protected ?ConnectionInterface $connection = null;
     protected bool $lazy = false;
 
-    /**
-     * @param null|WithClause $cte
-     */
     public function __construct(
         protected ?WithClause $cte = null
-    )
-    {
-    }
-
-    protected function newInstance(): self
-    {
-        return new self()
-            ->setConnection($this->connection);
-    }
+    ) {}
 
     public function setConnection(?ConnectionInterface $connection = null): static
     {
         $this->connection = $connection;
+
         return $this;
     }
 
     /**
      * @param array<int|string, int|string>|string $columns
-     * @return static
      */
     public function select(array|string ...$columns): static
     {
         $this->columns = $this->normalizeColumns($columns);
+
         return $this;
     }
 
     /**
-     * @param string $sql
      * @param array<int, mixed> $bindings
-     * @return static
      */
     public function selectRaw(string $sql, array $bindings = []): static
     {
         $this->columns[] = new Expression($sql, $bindings);
-        return $this;
-    }
 
-    /**
-     * @param array<mixed, mixed> $columns
-     * @return string[]
-     */
-    protected function normalizeColumns(array $columns): array
-    {
-        if (count($columns) === 1 && is_array($columns[0])) {
-            $columns = $columns[0];
-        }
-        if (empty($columns)) {
-            return ['*'];
-        }
-        $result = [];
-        foreach ($columns as $column) {
-            if (empty($column)) {
-                $result[] = '*';
-                continue;
-            }
-            if (is_string($column)) {
-                $result[] = trim($column) ?: '*';
-                continue;
-            }
-            foreach ($column as $index => $columnOrAlias) {
-                if (!is_string($columnOrAlias)
-                    || (is_string($index) && empty($columnOrAlias))) {
-                    throw new InvalidArgumentException('Column must be a string or key-value array');
-                }
-                $columnOrAlias = trim($columnOrAlias) ?: '*';
-                if (is_int($index)) {
-                    $result[] = $columnOrAlias;
-                } else {
-                    $index = trim($index) ?: '*';
-                    $result[] = "{$index} as {$columnOrAlias}";
-                }
-            }
-        }
-        return $result;
+        return $this;
     }
 
     public function distinct(): static
     {
         $this->isDistinct = true;
+
         return $this;
     }
 
     public function from(string $table, ?string $alias = null): static
     {
         $this->from = new FromClause($table, $alias);
+
         return $this;
     }
 
-    public function join(string $table, Closure $condition, ?string $alias = null, JoinTypeEnum $type = JoinTypeEnum::INNER): static
+    public function join(string $table, \Closure $condition, ?string $alias = null, JoinTypeEnum $type = JoinTypeEnum::INNER): static
     {
         $joinClause = new JoinClause(
             new FromClause($table, $alias),
@@ -174,45 +124,43 @@ class SelectQuery implements LazyQueryInterface
         return $this;
     }
 
-    public function leftJoin(string $table, Closure $condition, ?string $alias = null): static
+    public function leftJoin(string $table, \Closure $condition, ?string $alias = null): static
     {
         return $this->join($table, $condition, $alias, JoinTypeEnum::LEFT);
     }
 
-    public function rightJoin(string $table, Closure $condition, ?string $alias = null): static
+    public function rightJoin(string $table, \Closure $condition, ?string $alias = null): static
     {
         return $this->join($table, $condition, $alias, JoinTypeEnum::RIGHT);
     }
 
-
     public function where(
-        string|Closure $column,
-        mixed          $operatorOrValue = null,
-        mixed          $value = null,
-    ): static
-    {
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
         $this->getOrCreateWhere()->where($column, $operatorOrValue, $value);
+
         return $this;
     }
 
     public function orWhere(
-        string|Closure $column,
-        mixed          $operatorOrValue = null,
-        mixed          $value = null,
-    ): static
-    {
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
         $this->getOrCreateWhere()->orWhere($column, $operatorOrValue, $value);
+
         return $this;
     }
 
     /**
-     * @param string $sql
      * @param array<int, mixed> $bindings
-     * @return static
      */
     public function whereRaw(string $sql, array $bindings = []): static
     {
         $this->getOrCreateWhere()->whereRaw($sql, $bindings);
+
         return $this;
     }
 
@@ -221,50 +169,47 @@ class SelectQuery implements LazyQueryInterface
         foreach ($columns as $column) {
             $this->groupBy[$column] = $column;
         }
+
         return $this;
     }
 
     /**
-     * @param string $sql
      * @param array<int, mixed> $bindings
-     * @return static
      */
     public function groupByRaw(string $sql, array $bindings = []): static
     {
         $this->groupBy[] = new Expression($sql, $bindings);
+
         return $this;
     }
 
-
     public function having(
-        string|Closure $column,
-        mixed          $operatorOrValue = null,
-        mixed          $value = null,
-    ): static
-    {
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
         $this->getOrCreateHaving()->having($column, $operatorOrValue, $value);
 
         return $this;
     }
 
     /**
-     * @param string $sql
      * @param array<int, mixed> $bindings
-     * @return static
      */
     public function havingRaw(string $sql, array $bindings = []): static
     {
         $this->getOrCreateHaving()->havingRaw($sql, $bindings);
+
         return $this;
     }
 
     public function orHaving(
-        string|Closure $column,
-        mixed          $operatorOrValue = null,
-        mixed          $value = null,
-    ): static
-    {
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
         $this->getOrCreateHaving()->orHaving($column, $operatorOrValue, $value);
+
         return $this;
     }
 
@@ -272,22 +217,22 @@ class SelectQuery implements LazyQueryInterface
     {
         $dir = strtolower($direction);
         if (!in_array($dir, ['asc', 'desc'])) {
-            throw new RuntimeException("Invalid direction [$dir]");
+            throw new \RuntimeException("Invalid direction [{$dir}]");
         }
         $param = empty($this->unions) ? 'orderBy' : 'unionOrderBy';
         $this->{$param}[$column] = $dir;
+
         return $this;
     }
 
     /**
-     * @param string $sql
      * @param array<int, mixed> $bindings
-     * @return static
      */
     public function orderByRaw(string $sql, array $bindings = []): static
     {
         $param = empty($this->unions) ? 'orderBy' : 'unionOrderBy';
         $this->{$param}[] = new Expression($sql, $bindings);
+
         return $this;
     }
 
@@ -299,6 +244,7 @@ class SelectQuery implements LazyQueryInterface
         $param = empty($this->unions) ? 'limit' : 'unionLimit';
 
         $this->{$param} = $limit;
+
         return $this;
     }
 
@@ -309,18 +255,20 @@ class SelectQuery implements LazyQueryInterface
         }
         $param = empty($this->unions) ? 'offset' : 'unionOffset';
         $this->{$param} = $offset;
+
         return $this;
     }
 
-    public function union(Closure $callback, bool $isAll = false): static
+    public function union(\Closure $callback, bool $isAll = false): static
     {
         $union = $this->newInstance();
         $callback($union);
         $this->unions[] = new UnionClause($union, $isAll);
+
         return $this;
     }
 
-    public function unionAll(Closure $callback): static
+    public function unionAll(\Closure $callback): static
     {
         return $this->union($callback, true);
     }
@@ -366,7 +314,6 @@ class SelectQuery implements LazyQueryInterface
         return $this->unionLimit;
     }
 
-
     public function getOffset(): ?int
     {
         return $this->offset;
@@ -404,9 +351,9 @@ class SelectQuery implements LazyQueryInterface
     public function lazy(): static
     {
         $this->lazy = true;
+
         return $this;
     }
-
 
     public function toSql(): ?string
     {
@@ -421,14 +368,6 @@ class SelectQuery implements LazyQueryInterface
         return $this->getCompiled()?->getBindings() ?? [];
     }
 
-
-    protected function getOrCreateWhere(): WhereClause
-    {
-        return $this->where ??= new WhereClause(
-            new ConditionGroup()
-        );
-    }
-
     public function getOrCreateHaving(): HavingClause
     {
         return $this->having ??= new HavingClause(
@@ -439,11 +378,6 @@ class SelectQuery implements LazyQueryInterface
     public function isDistinct(): bool
     {
         return $this->isDistinct;
-    }
-
-    protected function getCompiled(): ?Expression
-    {
-        return $this->compiledQuery ??= $this->connection?->getCompiled($this);
     }
 
     public function getCte(): ?WithClause
@@ -470,5 +404,67 @@ class SelectQuery implements LazyQueryInterface
     public function isLazy(): bool
     {
         return $this->lazy;
+    }
+
+    protected function newInstance(): self
+    {
+        return new self()
+            ->setConnection($this->connection)
+        ;
+    }
+
+    /**
+     * @param array<mixed, mixed> $columns
+     *
+     * @return string[]
+     */
+    protected function normalizeColumns(array $columns): array
+    {
+        if (1 === count($columns) && is_array($columns[0])) {
+            $columns = $columns[0];
+        }
+        if (empty($columns)) {
+            return ['*'];
+        }
+        $result = [];
+        foreach ($columns as $column) {
+            if (empty($column)) {
+                $result[] = '*';
+
+                continue;
+            }
+            if (is_string($column)) {
+                $result[] = trim($column) ?: '*';
+
+                continue;
+            }
+            foreach ($column as $index => $columnOrAlias) {
+                if (!is_string($columnOrAlias)
+                    || (is_string($index) && empty($columnOrAlias))) {
+                    throw new \InvalidArgumentException('Column must be a string or key-value array');
+                }
+                $columnOrAlias = trim($columnOrAlias) ?: '*';
+                if (is_int($index)) {
+                    $result[] = $columnOrAlias;
+                } else {
+                    $index = trim($index) ?: '*';
+                    $result[] = "{$index} as {$columnOrAlias}";
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    protected function getOrCreateWhere(): WhereClause
+    {
+        return $this->where ??= new WhereClause(
+            new ConditionGroup()
+        );
+    }
+
+    protected function getCompiled(): ?Expression
+    {
+        return $this->compiledQuery ??= $this->connection?->getCompiled($this);
     }
 }

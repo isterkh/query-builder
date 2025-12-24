@@ -1,10 +1,9 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Clauses;
 
-use Closure;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
@@ -15,17 +14,12 @@ class JoinClause implements HasConditionInterface
 {
     use HasConditionTrait;
     use WhereAliasTrait;
+
     public function __construct(
         protected FromClause $from,
         protected JoinTypeEnum $type,
         protected ConditionGroup $conditions,
-    )
-    {
-    }
-
-    protected function newInstance(): self {
-        return new self($this->from, $this->type, new ConditionGroup());
-    }
+    ) {}
 
     public function getConditions(): ConditionGroup
     {
@@ -33,35 +27,34 @@ class JoinClause implements HasConditionInterface
     }
 
     public function on(
-        string|Closure $column,
+        \Closure|string $column,
         mixed $operatorOrValue = null,
         mixed $value = null
-    ): static
-    {
+    ): static {
         return $this->add($column, $operatorOrValue, $value, false, true);
     }
+
     public function where(
-        string|Closure $column,
+        \Closure|string $column,
         mixed $operatorOrValue = null,
         mixed $value = null
-    ): static
-    {
+    ): static {
         return $this->add($column, $operatorOrValue, $value, false);
     }
+
     public function orOn(
-        string|Closure $column,
+        \Closure|string $column,
         mixed $operatorOrValue = null,
         mixed $value = null
-    ): static
-    {
+    ): static {
         return $this->add($column, $operatorOrValue, $value, true, true);
     }
+
     public function orWhere(
-        string|Closure $column,
+        \Closure|string $column,
         mixed $operatorOrValue = null,
         mixed $value = null
-    ): static
-    {
+    ): static {
         return $this->add($column, $operatorOrValue, $value, true);
     }
 
@@ -69,8 +62,14 @@ class JoinClause implements HasConditionInterface
     {
         return $this->type;
     }
+
     public function getFrom(): FromClause
     {
         return $this->from;
+    }
+
+    protected function newInstance(): self
+    {
+        return new self($this->from, $this->type, new ConditionGroup());
     }
 }

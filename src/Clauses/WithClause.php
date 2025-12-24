@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Clauses;
 
@@ -12,20 +12,22 @@ class WithClause
      * @var array<string, QueryInterface>
      */
     protected array $queries = [];
+
     public function __construct(
         protected bool $isRecursive = false
-    )
-    {
+    ) {}
 
-    }
     public function setRecursive(bool $isRecursive): static
     {
         $this->isRecursive = $isRecursive;
+
         return $this;
     }
+
     public function add(string $alias, QueryInterface $query): static
     {
         $this->queries[$alias] = $query;
+
         return $this;
     }
 
@@ -42,7 +44,8 @@ class WithClause
     /**
      * @return QueryInterface[]
      */
-    public function getQueries(): array {
+    public function getQueries(): array
+    {
         return $this->queries;
     }
 }

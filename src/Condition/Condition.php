@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Condition;
 
@@ -11,8 +11,7 @@ class Condition
         protected string $operator,
         protected mixed $value,
         protected bool $rightIsColumn = false
-    )
-    {
+    ) {
         $this->operator = trim(strtolower($this->operator));
     }
 
@@ -20,16 +19,19 @@ class Condition
     {
         return $this->column;
     }
+
     public function getOperator(): string
     {
         return $this->operator;
     }
+
     public function getValue(): mixed
     {
         return $this->value;
     }
 
-    public function isRightIsColumn(): bool {
+    public function isRightIsColumn(): bool
+    {
         return $this->rightIsColumn;
     }
 }

@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Condition;
 
@@ -8,20 +8,19 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 
 class ConditionGroup
 {
-
     /**
      * @var Condition[]|ConditionGroup[]|Expression[]
      */
     protected array $conditions = [];
+
     public function __construct(
         protected bool $isOr = false
-    )
-    {
-    }
+    ) {}
 
     public function add(Condition|ConditionGroup|Expression $condition): static
     {
         $this->conditions[] = $condition;
+
         return $this;
     }
 
@@ -38,7 +37,7 @@ class ConditionGroup
         return $this->isOr;
     }
 
-    public function getLast(): null|Condition|ConditionGroup|Expression
+    public function getLast(): Condition|ConditionGroup|Expression|null
     {
         return $this->conditions[array_key_last($this->conditions)] ?? null;
     }
@@ -46,11 +45,12 @@ class ConditionGroup
     public function pop(): static
     {
         array_pop($this->conditions);
+
         return $this;
     }
 
-    public function isEmpty(): bool {
+    public function isEmpty(): bool
+    {
         return empty($this->conditions);
     }
-
 }

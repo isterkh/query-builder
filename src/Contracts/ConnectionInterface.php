@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Contracts;
 
@@ -11,11 +11,11 @@ interface ConnectionInterface
     public function getCompiler(): CompilerInterface;
 
     /**
-     * @param QueryInterface $query
      * @return iterable<mixed>
      */
     public function query(QueryInterface $query): iterable;
-    public function execute(QueryInterface $query): int;
-    public function getCompiled(QueryInterface $query): Expression;
 
+    public function execute(QueryInterface $query): int;
+
+    public function getCompiled(QueryInterface $query): Expression;
 }

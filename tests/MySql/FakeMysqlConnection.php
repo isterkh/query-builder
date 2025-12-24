@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Tests\MySql;
 
@@ -11,12 +11,9 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 
 class FakeMysqlConnection implements ConnectionInterface
 {
-
     public function __construct(
         protected CompilerInterface $compiler,
-    )
-    {
-    }
+    ) {}
 
     public function getCompiler(): CompilerInterface
     {

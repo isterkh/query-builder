@@ -1,20 +1,18 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers;
 
-use Closure;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerNotFoundException;
 use Isterkh\QueryBuilder\Expressions\Expression;
-use RuntimeException;
 
 class CompilerStrategy implements CompilerInterface
 {
     /**
-     * @var Closure[]
+     * @var \Closure[]
      */
     protected array $factories = [];
 
@@ -23,22 +21,10 @@ class CompilerStrategy implements CompilerInterface
      */
     protected array $instances = [];
 
-    protected function getCompiler(int $index): CompilerInterface
-    {
-        if (empty($this->instances[$index])) {
-            $compiler = $this->factories[$index]();
-            if (!($compiler instanceof CompilerInterface)) {
-                throw new RuntimeException('Compiler not found');
-            }
-            $this->instances[$index] = $compiler;
-
-        }
-        return $this->instances[$index];
-    }
-
-    public function with(Closure $factory): static
+    public function with(\Closure $factory): static
     {
         $this->factories[] = $factory;
+
         return $this;
     }
 
@@ -50,7 +36,8 @@ class CompilerStrategy implements CompilerInterface
                 return $compiler->compile($query);
             }
         }
-        throw new CompilerNotFoundException('Compiler not found for query: ' . get_class($query));
+
+        throw new CompilerNotFoundException('Compiler not found for query: '.$query::class);
     }
 
     public function supports(QueryInterface $query): bool
@@ -63,5 +50,18 @@ class CompilerStrategy implements CompilerInterface
         }
 
         return false;
+    }
+
+    protected function getCompiler(int $index): CompilerInterface
+    {
+        if (empty($this->instances[$index])) {
+            $compiler = $this->factories[$index]();
+            if (!$compiler instanceof CompilerInterface) {
+                throw new \RuntimeException('Compiler not found');
+            }
+            $this->instances[$index] = $compiler;
+        }
+
+        return $this->instances[$index];
     }
 }

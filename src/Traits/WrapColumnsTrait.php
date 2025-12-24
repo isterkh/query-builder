@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Traits;
 
@@ -8,13 +8,12 @@ trait WrapColumnsTrait
 {
     protected function wrap(int|string $value): string
     {
-
         if (is_int($value)) {
-            return (string)$value;
+            return (string) $value;
         }
 
         $split = preg_split('/\s+(as)\s+/i', $value, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
-        if ($split === false) {
+        if (false === $split) {
             return "`{$value}`";
         }
         $split = array_slice($split, 0, 3);
@@ -23,10 +22,12 @@ trait WrapColumnsTrait
         foreach ($split as $part) {
             if (in_array($part, $ignore) || (str_starts_with($part, '`') && str_ends_with($part, '`'))) {
                 $parts[] = $part;
+
                 continue;
             }
-            $parts[] = implode('.', array_map(static fn($p) => "`{$p}`", explode('.', $part)));
+            $parts[] = implode('.', array_map(static fn ($p) => "`{$p}`", explode('.', $part)));
         }
+
         return implode(' ', $parts);
     }
 }

@@ -5,3 +5,5 @@ test.php
 .phpunit.result.cache
 .phpunit.cache
 .DS_Store
+.php-cs-fixer.dist.php
+.php-cs-fixer.cache

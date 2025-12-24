@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers\MySql;
 
@@ -23,7 +23,7 @@ class ConditionsCompiler
         'in', 'not in',
         'between', 'not between',
         'like', 'not like',
-        'is', 'is not'
+        'is', 'is not',
     ];
 
     /**
@@ -40,7 +40,7 @@ class ConditionsCompiler
      * @var array|string[]
      */
     protected array $exactEqualityOperators = [
-        '=', '!=', '<>'
+        '=', '!=', '<>',
     ];
 
     // TODO: Сделать адекватнее проверку на пустые условия.
@@ -85,15 +85,16 @@ class ConditionsCompiler
             $condition->isRightIsColumn()
         );
 
-        if ($value === null && in_array($operator, $this->exactEqualityOperators, true)) {
+        if (null === $value && in_array($operator, $this->exactEqualityOperators, true)) {
             return $this->compileNull($preparedCondition);
         }
 
         if (!empty($this->specialHandlers[$operator])) {
             $handler = $this->specialHandlers[$operator];
             if (!method_exists($this, $handler)) {
-                throw new CompilerException('Cannot compile operator ' . $operator);
+                throw new CompilerException('Cannot compile operator '.$operator);
             }
+
             return $this->{$handler}($preparedCondition);
         }
 
@@ -102,15 +103,16 @@ class ConditionsCompiler
 
     protected function compileNull(Condition $condition): Expression
     {
-        $operator = $condition->getOperator() === '=' ? 'is' : 'is not';
+        $operator = '=' === $condition->getOperator() ? 'is' : 'is not';
+
         return new Expression("{$condition->getColumn()} {$operator} null");
     }
 
     protected function compileBetween(Condition $condition): Expression
     {
         $value = $condition->getValue();
-        if (count($value) !== 2) {
-            throw new CompilerException("There must be exactly two values for between condition");
+        if (2 !== count($value)) {
+            throw new CompilerException('There must be exactly two values for between condition');
         }
         if ($condition->isRightIsColumn()) {
             return new Expression(
@@ -122,7 +124,6 @@ class ConditionsCompiler
             "{$condition->getColumn()} {$condition->getOperator()} ? and ?",
             $value
         );
-
     }
 
     protected function compileIn(Condition $condition): Expression
@@ -132,6 +133,7 @@ class ConditionsCompiler
             return new Expression('');
         }
         $placeholders = implode(', ', array_fill(0, count($value), '?'));
+
         return new Expression(
             "{$condition->getColumn()} {$condition->getOperator()} ({$placeholders})",
             $value
@@ -145,6 +147,7 @@ class ConditionsCompiler
                 "{$condition->getColumn()} {$condition->getOperator()} {$condition->getValue()}"
             );
         }
+
         return new Expression(
             "{$condition->getColumn()} {$condition->getOperator()} ?",
             [$condition->getValue()]

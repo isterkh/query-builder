@@ -1,10 +1,7 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Exceptions;
 
-class UnsupportedOperatorException extends CompilerException
-{
-
-}
+class UnsupportedOperatorException extends CompilerException {}
