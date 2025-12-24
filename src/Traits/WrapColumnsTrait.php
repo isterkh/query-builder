@@ -12,11 +12,12 @@ trait WrapColumnsTrait
         if (is_int($value)) {
             return (string)$value;
         }
-        $split = array_slice(
-            preg_split('/\s+(as)\s+/i', $value, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE),
-            0,
-            3);
 
+        $split = preg_split('/\s+(as)\s+/i', $value, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        if ($split === false) {
+            return "`{$value}`";
+        }
+        $split = array_slice($split, 0, 3);
         $ignore = ['*', 'as', 'AS'];
         $parts = [];
         foreach ($split as $part) {

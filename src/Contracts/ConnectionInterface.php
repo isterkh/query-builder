@@ -9,6 +9,11 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 interface ConnectionInterface
 {
     public function getCompiler(): CompilerInterface;
+
+    /**
+     * @param QueryInterface $query
+     * @return iterable<mixed>
+     */
     public function query(QueryInterface $query): iterable;
     public function execute(QueryInterface $query): int;
     public function getCompiled(QueryInterface $query): Expression;

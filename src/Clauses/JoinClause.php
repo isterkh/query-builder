@@ -23,8 +23,8 @@ class JoinClause implements HasConditionInterface
     {
     }
 
-    protected function newInstance(): static {
-        return new static($this->from, $this->type, new ConditionGroup());
+    protected function newInstance(): self {
+        return new self($this->from, $this->type, new ConditionGroup());
     }
 
     public function getConditions(): ConditionGroup

@@ -14,6 +14,7 @@ use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
+use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
@@ -21,53 +22,53 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 use RuntimeException;
 
-class SelectQuery implements QueryInterface
+class SelectQuery implements LazyQueryInterface
 {
-
     use WhereAliasTrait;
 
     protected ?FromClause $from = null;
+
+    /**
+     * @var Expression[]|string[]
+     */
+    protected array $columns = [];
+    protected bool $isDistinct = false;
+    /**
+     * @var JoinClause[]
+     */
+    protected array $joins = [];
     protected ?WhereClause $where = null;
-    protected ?HavingClause $having = null;
-    protected ?int $limit = null;
-    protected ?int $offset = null;
-    /**
-     * @var array<int|string, string|Expression> $orderBy
-     */
-    protected array $orderBy = [];
-    /**
-     * @var array<int, string|Expression>
-     */
     /**
      * @var array<int|string, string|Expression>
      */
     protected array $groupBy = [];
+    protected ?HavingClause $having = null;
+    /**
+     * @var array<int|string, string|Expression> $orderBy
+     */
+    protected array $orderBy = [];
 
-    protected ?Expression $compiledQuery = null;
 
-    protected array $joins = [];
+    protected ?int $limit = null;
+
+    protected ?int $offset = null;
 
     /**
      * @var array<int, UnionClause>
      */
     protected array $unions = [];
 
-    protected bool $isDistinct = false;
-
-    protected array $columns = [];
-
+    /**
+     * @var array<int|string, string|Expression> $unionOrderBy
+     */
+    protected array $unionOrderBy = [];
     protected ?int $unionLimit = null;
     protected ?int $unionOffset = null;
-    protected array $unionOrderBy = [];
-
+    protected ?Expression $compiledQuery = null;
     protected ?ConnectionInterface $connection = null;
-
     protected bool $lazy = false;
 
-
     /**
-     * @param CompilerInterface $compiler
-     * @param array $columns
      * @param null|WithClause $cte
      */
     public function __construct(
@@ -76,9 +77,9 @@ class SelectQuery implements QueryInterface
     {
     }
 
-    protected function newInstance(): static
+    protected function newInstance(): self
     {
-        return new static()
+        return new self()
             ->setConnection($this->connection);
     }
 
@@ -88,18 +89,31 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    /**
+     * @param array<int|string, int|string>|string $columns
+     * @return static
+     */
     public function select(array|string ...$columns): static
     {
         $this->columns = $this->normalizeColumns($columns);
         return $this;
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function selectRaw(string $sql, array $bindings = []): static
     {
         $this->columns[] = new Expression($sql, $bindings);
         return $this;
     }
 
+    /**
+     * @param array<mixed, mixed> $columns
+     * @return string[]
+     */
     protected function normalizeColumns(array $columns): array
     {
         if (count($columns) === 1 && is_array($columns[0])) {
@@ -191,6 +205,11 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function whereRaw(string $sql, array $bindings = []): static
     {
         $this->getOrCreateWhere()->whereRaw($sql, $bindings);
@@ -205,6 +224,11 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function groupByRaw(string $sql, array $bindings = []): static
     {
         $this->groupBy[] = new Expression($sql, $bindings);
@@ -223,6 +247,11 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function havingRaw(string $sql, array $bindings = []): static
     {
         $this->getOrCreateHaving()->havingRaw($sql, $bindings);
@@ -250,6 +279,11 @@ class SelectQuery implements QueryInterface
         return $this;
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function orderByRaw(string $sql, array $bindings = []): static
     {
         $param = empty($this->unions) ? 'orderBy' : 'unionOrderBy';
@@ -291,6 +325,9 @@ class SelectQuery implements QueryInterface
         return $this->union($callback, true);
     }
 
+    /**
+     * @return Expression[]|string[]
+     */
     public function getColumns(): array
     {
         return $this->columns;
@@ -307,7 +344,7 @@ class SelectQuery implements QueryInterface
     }
 
     /**
-     * @return array<JoinClause>
+     * @return JoinClause[]
      */
     public function getJoins(): array
     {
@@ -340,17 +377,25 @@ class SelectQuery implements QueryInterface
         return $this->unionOffset;
     }
 
+    /**
+     * @return Expression[]|string[]
+     */
     public function getOrderBy(): array
     {
         return $this->orderBy;
     }
 
+    /**
+     * @return Expression[]|string[]
+     */
     public function getUnionOrderBy(): array
     {
         return $this->unionOrderBy;
     }
 
-
+    /**
+     * @return Expression[]|string[]
+     */
     public function getGroupBy(): array
     {
         return $this->groupBy;
@@ -363,14 +408,17 @@ class SelectQuery implements QueryInterface
     }
 
 
-    public function toSql(): string
+    public function toSql(): ?string
     {
-        return $this->getCompiled()->getSql();
+        return $this->getCompiled()?->getSql();
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function getBindings(): array
     {
-        return $this->getCompiled()->getBindings();
+        return $this->getCompiled()?->getBindings() ?? [];
     }
 
 
@@ -403,14 +451,24 @@ class SelectQuery implements QueryInterface
         return $this->cte;
     }
 
+    /**
+     * @return UnionClause[]
+     */
     public function getUnions(): array
     {
         return $this->unions;
     }
 
-    public function get(): iterable
+    /**
+     * @return null|iterable<mixed>
+     */
+    public function get(): ?iterable
     {
-        return $this->connection->query($this, $this->lazy);
+        return $this->connection?->query($this);
     }
 
+    public function isLazy(): bool
+    {
+        return $this->lazy;
+    }
 }

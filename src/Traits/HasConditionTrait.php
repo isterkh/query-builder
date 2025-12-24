@@ -25,6 +25,9 @@ trait HasConditionTrait
             return $this;
         }
         if ($column instanceof Closure) {
+            /**
+             * @phpstan-ignore-next-line
+             */
             $subClause = method_exists($this, 'newInstance') ? $this->newInstance() : new static(new ConditionGroup());
             $column($subClause);
             $this->addCondition($subClause->getConditions(), $isOr);
@@ -59,7 +62,11 @@ trait HasConditionTrait
 
     }
 
-
+    /**
+     * @param mixed|null $operatorOrValue
+     * @param mixed|null $value
+     * @return array<mixed, mixed>
+     */
     protected function parseOperatorValue(
         mixed  $operatorOrValue = null,
         mixed  $value = null

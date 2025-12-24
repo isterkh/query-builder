@@ -39,6 +39,9 @@ class WithClause
         return $this->isRecursive;
     }
 
+    /**
+     * @return QueryInterface[]
+     */
     public function getQueries(): array {
         return $this->queries;
     }

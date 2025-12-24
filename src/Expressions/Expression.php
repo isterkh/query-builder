@@ -8,6 +8,10 @@ use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 
 class Expression
 {
+    /**
+     * @param string $sql
+     * @param array<mixed> $bindings
+     */
     public function __construct(
         protected  string $sql,
         protected array  $bindings = []
@@ -16,23 +20,29 @@ class Expression
         $this->sql = trim($this->sql);
     }
 
-    public function merge(?Expression ...$expressions): static
+    public function merge(Expression ...$expressions): static
     {
         $sql = [$this->sql];
-        $bindings = $this->bindings;
+        $bindings = array_values($this->bindings);
         foreach ($expressions as $expression) {
-            $sql[] = $expression->sql;
-            $bindings = [...$bindings, ...$expression->bindings];
+            $sql[] = $expression->getSql();
+            $bindings = [...$bindings, ...array_values($expression->getBindings())];
         }
+        /**
+         * @phpstan-ignore-next-line
+         */
         return new static(implode(' ', array_filter($sql)), $bindings);
     }
 
     /**
-     * @param array<Expression> $expressions
-     * @return static
+     * @param Expression ...$expressions
+     * @return Expression
      */
-    public static function fromExpressions(Expression ...$expressions): static
+    public static function fromExpressions(Expression ...$expressions): Expression
     {
+        if (empty($expressions)) {
+            throw new QueryBuilderException('Empty list of expressions');
+        }
         $first = array_shift($expressions);
         return array_reduce(
             $expressions,
@@ -41,8 +51,11 @@ class Expression
         );
     }
 
-    public function wrap(): Expression
+    public function wrap(): static
     {
+        /**
+         * @phpstan-ignore-next-line
+         */
         return new static("({$this->sql})", $this->bindings);
     }
 
@@ -50,6 +63,10 @@ class Expression
     {
         return $this->sql;
     }
+
+    /**
+     * @return mixed[]
+     */
     public function getBindings(): array
     {
         return $this->bindings;

@@ -25,9 +25,9 @@ class QueryBuilder
     }
 
 
-    protected function newInstance(): static
+    protected function newInstance(): self
     {
-        return new static($this->connection);
+        return new self($this->connection);
     }
 
     protected function newSelectQuery(): SelectQuery
@@ -42,11 +42,21 @@ class QueryBuilder
         return $this;
     }
 
+    /**
+     * @param array<int|string, int|string>|string $columns
+     * @return SelectQuery
+     */
     public function select(array|string ...$columns): SelectQuery
     {
         return $this->newSelectQuery()->select(...$columns);
     }
 
+
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return SelectQuery
+     */
     public function selectRaw(string $sql, array $bindings = []): SelectQuery
     {
         return $this->newSelectQuery()->selectRaw($sql, $bindings);

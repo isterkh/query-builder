@@ -7,5 +7,9 @@ namespace Isterkh\QueryBuilder\Contracts;
 interface QueryInterface
 {
     public function toSql(): ?string;
+
+    /**
+     * @return mixed[]
+     */
     public function getBindings(): array;
 }

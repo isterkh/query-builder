@@ -9,6 +9,9 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 class ConditionGroup
 {
 
+    /**
+     * @var Condition[]|ConditionGroup[]|Expression[]
+     */
     protected array $conditions = [];
     public function __construct(
         protected bool $isOr = false
@@ -22,6 +25,9 @@ class ConditionGroup
         return $this;
     }
 
+    /**
+     * @return Condition[]|ConditionGroup[]|Expression[]
+     */
     public function getConditions(): array
     {
         return $this->conditions;

@@ -14,6 +14,10 @@ use Isterkh\QueryBuilder\Traits\WrapColumnsTrait;
 class ConditionsCompiler
 {
     use WrapColumnsTrait;
+
+    /**
+     * @var array|string[]
+     */
     protected array $operators = [
         '=', '!=', '<>', '<', '>', '<=', '>=',
         'in', 'not in',
@@ -22,12 +26,19 @@ class ConditionsCompiler
         'is', 'is not'
     ];
 
+    /**
+     * @var array|string[]
+     */
     protected array $specialHandlers = [
         'in' => 'compileIn',
         'not in' => 'compileIn',
         'between' => 'compileBetween',
         'not between' => 'compileBetween',
     ];
+
+    /**
+     * @var array|string[]
+     */
     protected array $exactEqualityOperators = [
         '=', '!=', '<>'
     ];
@@ -45,11 +56,11 @@ class ConditionsCompiler
                 }
                 $compiled = $this->compile($condition)->wrap();
                 $parts[] = $compiled->getSql();
-                $bindings = array_merge($bindings, $compiled->getBindings() ?? []);
+                $bindings = array_merge($bindings, $compiled->getBindings());
             } else {
                 $compiled = $this->compileSingleCondition($condition);
                 $parts[] = $compiled->getSql();
-                $bindings = array_merge($bindings, $compiled->getBindings() ?? []);
+                $bindings = array_merge($bindings, $compiled->getBindings());
             }
         }
         $separator = $conditionGroup->isOr() ? ' or ' : ' and ';

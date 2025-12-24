@@ -13,7 +13,14 @@ use RuntimeException;
 
 class CompilerStrategy implements CompilerInterface
 {
+    /**
+     * @var Closure[]
+     */
     protected array $factories = [];
+
+    /**
+     * @var CompilerInterface[]
+     */
     protected array $instances = [];
 
     protected function getCompiler(int $index): CompilerInterface

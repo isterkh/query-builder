@@ -6,8 +6,11 @@ namespace Isterkh\QueryBuilder\Connection;
 
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
+use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Expressions\Expression;
+use MongoDB\Driver\Query;
+use PDOStatement;
 
 class PdoConnection implements ConnectionInterface
 {
@@ -25,15 +28,26 @@ class PdoConnection implements ConnectionInterface
         return $this->compiler;
     }
 
-    public function query(QueryInterface $query, bool $lazy = false): iterable
+    /**
+     * @param QueryInterface $query
+     * @return iterable<mixed>
+     */
+    public function query(QueryInterface $query): iterable
+    {
+        $stmt = $this->executeQuery($query);
+        if ($query instanceof LazyQueryInterface && $query->isLazy()) {
+            return $this->lazyFetch($stmt);
+        }
+        return $stmt->fetchAll();
+
+    }
+
+    protected function executeQuery(QueryInterface $query): PDOStatement
     {
         $compiled = $this->compiler->compile($query);
-        $stmt = $this->pdo->prepare($compiled->getSql());
+        $stmt = $this->pdo->prepare($query->toSql() ?? '');
         $stmt->execute($compiled->getBindings());
-        if (!$lazy) {
-            return $stmt->fetchAll();
-        }
-        return $this->lazyFetch($stmt);
+        return $stmt;
     }
 
     protected function lazyFetch(\PDOStatement $stmt): \Generator
@@ -45,7 +59,8 @@ class PdoConnection implements ConnectionInterface
 
     public function execute(QueryInterface $query): int
     {
-        // TODO: Implement execute() method.
+        $stmt = $this->executeQuery($query);
+        return $stmt->rowCount();
     }
 
     public function getCompiled(QueryInterface $query): Expression

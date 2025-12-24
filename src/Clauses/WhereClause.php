@@ -34,6 +34,11 @@ class WhereClause implements HasConditionInterface
         return $this->add($column, $operatorOrValue, $value, true);
     }
 
+    /**
+     * @param string $sql
+     * @param array<int, mixed> $bindings
+     * @return static
+     */
     public function whereRaw(string $sql, array $bindings = []): static
     {
         return $this->add($this->rawExpression($sql, $bindings));

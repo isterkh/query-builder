@@ -71,6 +71,10 @@ class SelectQueryCompiler implements CompilerInterface
         return $this->buildExpression([$cte, $main, $unions]);
     }
 
+    /**
+     * @param array<null|Expression> $expressions
+     * @return Expression
+     */
     protected function buildExpression(array $expressions): Expression
     {
         $filtered = array_filter($expressions);
