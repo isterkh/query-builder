@@ -25,7 +25,7 @@ trait HasConditionTrait
             return $this;
         }
         if ($column instanceof Closure) {
-            $subClause = new static(new ConditionGroup());
+            $subClause = method_exists($this, 'newInstance') ? $this->newInstance() : new static(new ConditionGroup());
             $column($subClause);
             $this->addCondition($subClause->getConditions(), $isOr);
             return $this;

@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace Tests\MySql\SelectQuery;
 
 use Isterkh\QueryBuilder\Clauses\JoinClause;
+use Isterkh\QueryBuilder\Clauses\WhereClause;
 
-class SelectJoinTest extends SelectQueryTestTemplate
+class JoinTest extends SelectQueryTestTemplate
 {
     public function testBasicJoins(): void
     {
@@ -36,5 +37,17 @@ class SelectJoinTest extends SelectQueryTestTemplate
             $query->toSql()
         );
         $this->assertEquals([1, 2, 3, 1, 2, 3], $query->getBindings());
+    }
+
+    public function testEmptyJoins(): void
+    {
+        $query = $this->query
+            ->join('t1', fn(JoinClause $join) => $join->where(fn (JoinClause $w) => $w))
+            ->leftJoin('t2', fn(JoinClause $join) => $join)
+            ->rightJoin('t3', fn(JoinClause $join) => $join);
+        $this->assertSame(
+            'select * from `t` inner join `t1` left join `t2` right join `t3`',
+            $query->toSql()
+        );
     }
 }

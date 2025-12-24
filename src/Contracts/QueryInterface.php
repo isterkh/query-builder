@@ -6,6 +6,6 @@ namespace Isterkh\QueryBuilder\Contracts;
 
 interface QueryInterface
 {
-    public function toSql(): string;
+    public function toSql(): ?string;
     public function getBindings(): array;
 }

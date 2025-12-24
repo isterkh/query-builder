@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Expressions;
 
-readonly class Expression
+use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
+
+class Expression
 {
     public function __construct(
-        public string $sql,
-        public array  $bindings = []
+        protected  string $sql,
+        protected array  $bindings = []
     )
     {
+        $this->sql = trim($this->sql);
     }
 
     public function merge(?Expression ...$expressions): static
     {
-
         $sql = [$this->sql];
         $bindings = $this->bindings;
         foreach ($expressions as $expression) {
@@ -42,5 +44,14 @@ readonly class Expression
     public function wrap(): Expression
     {
         return new static("({$this->sql})", $this->bindings);
+    }
+
+    public function getSql(): string
+    {
+        return $this->sql;
+    }
+    public function getBindings(): array
+    {
+        return $this->bindings;
     }
 }

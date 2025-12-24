@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Tests\MySql\SelectQuery;
 
+use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Tests\MySql\QueryTestTemplate;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -90,4 +91,14 @@ class SimpleSelectTest extends QueryTestTemplate
         );
         $this->assertSame([], $query->getBindings());
     }
+
+    public function testEmptyFromSelect(): void
+    {
+        $this->expectException(CompilerException::class);
+        $this->expectExceptionMessage('Missing from clause');
+        $this->builder
+            ->select('a')
+            ->toSql();
+    }
+
 }

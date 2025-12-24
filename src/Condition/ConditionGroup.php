@@ -43,4 +43,8 @@ class ConditionGroup
         return $this;
     }
 
+    public function isEmpty(): bool {
+        return empty($this->conditions);
+    }
+
 }

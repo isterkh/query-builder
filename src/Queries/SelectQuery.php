@@ -10,10 +10,13 @@ use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Clauses\UnionClause;
 use Isterkh\QueryBuilder\Clauses\WhereClause;
+use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
+use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
+use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 use RuntimeException;
@@ -22,7 +25,8 @@ class SelectQuery implements QueryInterface
 {
 
     use WhereAliasTrait;
-    protected FromClause $from;
+
+    protected ?FromClause $from = null;
     protected ?WhereClause $where = null;
     protected ?HavingClause $having = null;
     protected ?int $limit = null;
@@ -56,22 +60,32 @@ class SelectQuery implements QueryInterface
     protected ?int $unionOffset = null;
     protected array $unionOrderBy = [];
 
+    protected ?ConnectionInterface $connection = null;
+
+    protected bool $lazy = false;
+
 
     /**
      * @param CompilerInterface $compiler
      * @param array $columns
-     * @param array<string, QueryInterface> $cte
+     * @param null|WithClause $cte
      */
     public function __construct(
-        protected CompilerInterface $compiler,
-        protected array $cte = []
+        protected ?WithClause $cte = null
     )
     {
     }
 
     protected function newInstance(): static
     {
-        return new static($this->compiler);
+        return new static()
+            ->setConnection($this->connection);
+    }
+
+    public function setConnection(?ConnectionInterface $connection = null): static
+    {
+        $this->connection = $connection;
+        return $this;
     }
 
     public function select(array|string ...$columns): static
@@ -79,6 +93,7 @@ class SelectQuery implements QueryInterface
         $this->columns = $this->normalizeColumns($columns);
         return $this;
     }
+
     public function selectRaw(string $sql, array $bindings = []): static
     {
         $this->columns[] = new Expression($sql, $bindings);
@@ -181,6 +196,7 @@ class SelectQuery implements QueryInterface
         $this->getOrCreateWhere()->whereRaw($sql, $bindings);
         return $this;
     }
+
     public function groupBy(string ...$columns): static
     {
         foreach ($columns as $column) {
@@ -188,6 +204,7 @@ class SelectQuery implements QueryInterface
         }
         return $this;
     }
+
     public function groupByRaw(string $sql, array $bindings = []): static
     {
         $this->groupBy[] = new Expression($sql, $bindings);
@@ -205,6 +222,7 @@ class SelectQuery implements QueryInterface
 
         return $this;
     }
+
     public function havingRaw(string $sql, array $bindings = []): static
     {
         $this->getOrCreateHaving()->havingRaw($sql, $bindings);
@@ -242,7 +260,7 @@ class SelectQuery implements QueryInterface
     public function limit(int $limit): static
     {
         if ($limit < 0) {
-            throw new RuntimeException('Limit should be greater than 0');
+            throw new QueryBuilderException('Limit should be greater than 0');
         }
         $param = empty($this->unions) ? 'limit' : 'unionLimit';
 
@@ -253,7 +271,7 @@ class SelectQuery implements QueryInterface
     public function offset(int $offset): static
     {
         if ($offset < 0) {
-            throw new RuntimeException('Offset should be greater than 0');
+            throw new QueryBuilderException('Offset should be greater than 0');
         }
         $param = empty($this->unions) ? 'offset' : 'unionOffset';
         $this->{$param} = $offset;
@@ -278,7 +296,7 @@ class SelectQuery implements QueryInterface
         return $this->columns;
     }
 
-    public function getFrom(): FromClause
+    public function getFrom(): ?FromClause
     {
         return $this->from;
     }
@@ -305,6 +323,7 @@ class SelectQuery implements QueryInterface
     {
         return $this->limit;
     }
+
     public function getUnionLimit(): ?int
     {
         return $this->unionLimit;
@@ -315,6 +334,7 @@ class SelectQuery implements QueryInterface
     {
         return $this->offset;
     }
+
     public function getUnionOffset(): ?int
     {
         return $this->unionOffset;
@@ -324,6 +344,7 @@ class SelectQuery implements QueryInterface
     {
         return $this->orderBy;
     }
+
     public function getUnionOrderBy(): array
     {
         return $this->unionOrderBy;
@@ -335,15 +356,21 @@ class SelectQuery implements QueryInterface
         return $this->groupBy;
     }
 
+    public function lazy(): static
+    {
+        $this->lazy = true;
+        return $this;
+    }
+
 
     public function toSql(): string
     {
-        return $this->getCompiled()->sql;
+        return $this->getCompiled()->getSql();
     }
 
     public function getBindings(): array
     {
-        return $this->getCompiled()->bindings;
+        return $this->getCompiled()->getBindings();
     }
 
 
@@ -366,12 +393,12 @@ class SelectQuery implements QueryInterface
         return $this->isDistinct;
     }
 
-    protected function getCompiled(): Expression
+    protected function getCompiled(): ?Expression
     {
-        return $this->compiledQuery ??= $this->compiler->compile($this);
+        return $this->compiledQuery ??= $this->connection?->getCompiled($this);
     }
 
-    public function getCte(): array
+    public function getCte(): ?WithClause
     {
         return $this->cte;
     }
@@ -379,6 +406,11 @@ class SelectQuery implements QueryInterface
     public function getUnions(): array
     {
         return $this->unions;
+    }
+
+    public function get(): iterable
+    {
+        return $this->connection->query($this, $this->lazy);
     }
 
 }

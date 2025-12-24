@@ -6,7 +6,7 @@ namespace Tests\MySql\SelectQuery;
 
 use Isterkh\QueryBuilder\Clauses\WhereClause;
 
-class SelectWhereTest extends SelectQueryTestTemplate
+class WhereTest extends SelectQueryTestTemplate
 {
 
     public function testWhereBasic(): void
@@ -43,11 +43,11 @@ class SelectWhereTest extends SelectQueryTestTemplate
 
     public function testWhereRaw(): void
     {
-        $raw = 'status = ? and (force = ? or manual = ?) and YEAR(created_at) = ?';
+
         $query = $this->query
-            ->whereRaw($raw, ['paid', 1, 1, 2025]);
+            ->whereRaw('  status = ? and (force = ? or manual = ?) and YEAR(created_at) = ?  ', ['paid', 1, 1, 2025]);
         $this->assertStringEndsWith(
-           $raw,
+           'where status = ? and (force = ? or manual = ?) and YEAR(created_at) = ?',
            $query->toSql()
         );
         $this->assertSame(['paid', 1, 1, 2025], $query->getBindings());
@@ -75,6 +75,17 @@ class SelectWhereTest extends SelectQueryTestTemplate
             $query->toSql()
         );
         $this->assertSame(['2025-01-01', '2025-12-31', '2025-04-01', '2025-05-01'], $query->getBindings());
+    }
+
+    public function testWhereEmpty(): void
+    {
+        $query = $this->query
+            ->where(static fn (WhereClause $w) => $w)
+            ->whereRaw('');
+        $this->assertSame(
+            'select * from `t`',
+            $query->toSql()
+        );
     }
 
 

@@ -6,7 +6,9 @@ namespace Isterkh\QueryBuilder;
 
 use Closure;
 use InvalidArgumentException;
+use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
+use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
 use SebastianBergmann\CodeCoverage\Test\TestSize\Known;
@@ -14,24 +16,29 @@ use SebastianBergmann\CodeCoverage\Test\TestSize\Known;
 class QueryBuilder
 {
 
-    /**
-     * @param array<string, QueryInterface> $cte
-     */
-    protected array $cte = [];
+
     public function __construct(
-        protected CompilerInterface $compiler,
+        protected ?ConnectionInterface $connection = null,
+        protected WithClause           $cte = new WithClause()
     )
     {
     }
 
+
+    protected function newInstance(): static
+    {
+        return new static($this->connection);
+    }
+
     protected function newSelectQuery(): SelectQuery
     {
-        return new SelectQuery($this->compiler, $this->cte);
+        return new SelectQuery($this->cte)
+            ->setConnection($this->connection);
     }
 
     public function with(string $alias, Closure $callback): static
     {
-        $this->cte[$alias] = $callback(new static($this->compiler));
+        $this->cte->add($alias, $callback($this->newInstance()));
         return $this;
     }
 
@@ -44,8 +51,6 @@ class QueryBuilder
     {
         return $this->newSelectQuery()->selectRaw($sql, $bindings);
     }
-
-
 
 
 }

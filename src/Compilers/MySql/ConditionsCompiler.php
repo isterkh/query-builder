@@ -32,6 +32,7 @@ class ConditionsCompiler
         '=', '!=', '<>'
     ];
 
+    // TODO: Сделать адекватнее проверку на пустые условия.
     public function compile(ConditionGroup $conditionGroup): Expression
     {
         $parts = [];
@@ -39,13 +40,16 @@ class ConditionsCompiler
 
         foreach ($conditionGroup->getConditions() as $condition) {
             if ($condition instanceof ConditionGroup) {
-                $compiled = $this->compile($condition);
-                $parts[] = "($compiled->sql)";
-                $bindings = array_merge($bindings, $compiled->bindings ?? []);
+                if ($condition->isEmpty()) {
+                    continue;
+                }
+                $compiled = $this->compile($condition)->wrap();
+                $parts[] = $compiled->getSql();
+                $bindings = array_merge($bindings, $compiled->getBindings() ?? []);
             } else {
                 $compiled = $this->compileSingleCondition($condition);
-                $parts[] = "$compiled->sql";
-                $bindings = array_merge($bindings, $compiled->bindings ?? []);
+                $parts[] = $compiled->getSql();
+                $bindings = array_merge($bindings, $compiled->getBindings() ?? []);
             }
         }
         $separator = $conditionGroup->isOr() ? ' or ' : ' and ';

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Isterkh\QueryBuilder\Compilers\MySql;
 
 use Isterkh\QueryBuilder\Clauses\FromClause;
+use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerDoesNotSupportsQuery;
@@ -51,6 +52,7 @@ class SelectQueryCompiler implements CompilerInterface
             $this->compileHaving($query),
             $this->compileOrderBy($query),
             $this->compileLimit($query),
+            $this->compileOffset($query)
         ]);
 
         $unions = $this->compileUnions($query);
@@ -60,9 +62,9 @@ class SelectQueryCompiler implements CompilerInterface
 
             $unions = $unions->merge(
                 $this->buildExpression([
+                    $this->compileOrderBy($query, true),
                     $this->compileLimit($query, true),
-                    $this->compileOffset($query, true),
-                    $this->compileOrderBy($query, true)
+                    $this->compileOffset($query, true)
                 ])
             );
         }
@@ -96,12 +98,12 @@ class SelectQueryCompiler implements CompilerInterface
     protected function compileCte(SelectQuery $query): ?Expression
     {
         $cte = $query->getCte();
-        if (empty($cte)) {
+        if (empty($cte) || $cte->isEmpty()) {
             return null;
         }
         $parts = [];
         $bindings = [];
-        foreach ($cte as $alias => $expr) {
+        foreach ($cte->getQueries() as $alias => $expr) {
             $parts[] = "{$this->wrap($alias)} as ({$expr->toSql()})";
             $bindings = array_merge($bindings, $expr->getBindings());
         }
@@ -115,12 +117,15 @@ class SelectQueryCompiler implements CompilerInterface
 
     protected function compileSelect(SelectQuery $query): Expression
     {
+        if (empty($query->getFrom())) {
+            throw new CompilerException('Missing from clause');
+        }
         $columns = [];
         $bindings = [];
         foreach ($query->getColumns() as $i => $column) {
             if ($column instanceof Expression) {
-                $columns[] = $column->sql;
-                $bindings = [...$bindings, ...$column->bindings];
+                $columns[] = $column->getSql();
+                $bindings = [...$bindings, ...$column->getBindings()];
                 continue;
             }
             if (is_string($i)) {
@@ -133,7 +138,7 @@ class SelectQueryCompiler implements CompilerInterface
         $parts = array_filter([
             'select',
             $query->isDistinct() ? 'distinct' : '',
-            implode(', ', $columns),
+            implode(', ', $columns) ?: '*',
             'from',
             $this->compileFrom($query->getFrom())
         ]);
@@ -155,7 +160,10 @@ class SelectQueryCompiler implements CompilerInterface
             return null;
         }
         $compiled = $this->conditionsCompiler->compile($query->getWhere()->getConditions());
-        return new Expression('where ' . $compiled->sql, $compiled->bindings);
+        if (empty($compiled->getSql())) {
+            return null;
+        }
+        return new Expression('where ' . $compiled->getSql(), $compiled->getBindings());
     }
 
     protected function compileJoins(SelectQuery $query): Expression
@@ -163,9 +171,13 @@ class SelectQueryCompiler implements CompilerInterface
         $compiled = [];
         foreach ($query->getJoins() as $join) {
             $compiledConditions = $this->conditionsCompiler->compile($join->getConditions());
+            $joinSql = sprintf('%s join %s', $join->getType()->value, $this->compileFrom($join->getFrom()));
+            if (!empty($compiledConditions->getSql())) {
+                $joinSql .= ' on ' . $compiledConditions->getSql();
+            }
             $compiled[] = new Expression(
-                sprintf('%s join %s on %s', $join->getType()->value, $this->compileFrom($join->getFrom()), $compiledConditions->sql),
-                $compiledConditions->bindings,
+                $joinSql,
+                $compiledConditions->getBindings(),
             );
         }
         return $this->mergeParts(...$compiled);
@@ -177,8 +189,11 @@ class SelectQueryCompiler implements CompilerInterface
             return null;
         }
         $compiled = $this->conditionsCompiler->compile($query->getHaving()->getConditions());
+        if (empty($compiled->getSql())) {
+            return null;
+        }
 
-        return new Expression('having ' . $compiled->sql, $compiled->bindings);
+        return new Expression('having ' . $compiled->getSql(), $compiled->getBindings());
     }
 
 
@@ -210,12 +225,18 @@ class SelectQueryCompiler implements CompilerInterface
         $bindings = [];
         foreach ($orderBy as $column => $direction) {
             if ($direction instanceof Expression) {
-                $parts[] = $direction->sql;
-                $bindings = [...$bindings, ...$direction->bindings];
+                if (empty($direction->getSql())) {
+                    continue;
+                }
+                $parts[] = $direction->getSql();
+                $bindings = [...$bindings, ...$direction->getBindings()];
                 continue;
             }
             $column = $this->wrap($column);
             $parts[] = "{$column} {$direction}";
+        }
+        if (empty($parts)) {
+            return null;
         }
         return new Expression('order by ' . implode(', ', $parts), $bindings);
     }
@@ -229,12 +250,18 @@ class SelectQueryCompiler implements CompilerInterface
         $bindings = [];
         foreach ($query->getGroupBy() as $column => $value) {
             if ($value instanceof Expression) {
-                $parts[] = $value->sql;
-                $bindings = [...$bindings, ...$value->bindings];
+                if (empty($value->getSql())) {
+                    continue;
+                }
+                $parts[] = $value->getSql();
+                $bindings = [...$bindings, ...$value->getBindings()];
                 continue;
             }
             $parts[] = $this->wrap($column);
 
+        }
+        if (empty($parts)) {
+            return null;
         }
         return new Expression('group by ' . implode(', ', $parts), $bindings);
     }
@@ -244,11 +271,11 @@ class SelectQueryCompiler implements CompilerInterface
         $sqlParts = [];
         $bindings = [];
         foreach ($parts as $part) {
-            if (empty($part->sql)) {
+            if (empty($part->getSql())) {
                 continue;
             }
-            $sqlParts[] = $part->sql;
-            $bindings[] = $part->bindings;
+            $sqlParts[] = $part->getSql();
+            $bindings[] = $part->getBindings();
         }
         return new Expression(implode(' ', $sqlParts), array_merge(...$bindings));
     }
