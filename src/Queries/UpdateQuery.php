@@ -1,44 +1,79 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Queries;
 
-use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
+use Isterkh\QueryBuilder\Contracts\HasWhereInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Expressions\Expression;
+use Isterkh\QueryBuilder\Traits\HasWhereTrait;
+use Isterkh\QueryBuilder\Traits\QueryConnectionTrait;
+use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
+use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
-class UpdateQuery implements QueryInterface
+class UpdateQuery implements QueryInterface, HasWhereInterface
 {
+    use QueryConnectionTrait;
+    use HasWhereTrait;
+    use WhereAliasTrait;
 
     protected ?Expression $compiledQuery = null;
 
-    public function __construct()
+    /**
+     * @var array<mixed>
+     */
+    protected array $values = [];
+
+    public function __construct(
+        protected TableReference $table,
+    ) {}
+
+    public function getTable(): TableReference
     {
+        return $this->table;
     }
 
-    public function toSql(): ?string
+    /**
+     * @param array<string, mixed>|string $columnOrArray
+     *
+     * @return $this
+     */
+    public function set(array|string $columnOrArray, mixed $value = null): static
     {
-        // TODO: Implement toSql() method.
+        if (is_array($columnOrArray)) {
+            foreach ($columnOrArray as $column => $val) {
+                $this->setSingle($column, $val);
+            }
+        } else {
+            $this->setSingle($columnOrArray, $value);
+        }
+
+        return $this;
     }
 
-    public function getBindings(): array
+    /**
+     * @param mixed[] $bindings
+     */
+    public function setRaw(string $sql, array $bindings = []): static
     {
-        // TODO: Implement getBindings() method.
+        $this->values[] = new Expression($sql, $bindings);
+
+        return $this;
     }
 
-    public function setConnection(?ConnectionInterface $connection = null): static
+    /**
+     * @return mixed[]
+     */
+    public function getValues(): array
     {
-        // TODO: Implement setConnection() method.
+        return $this->values;
     }
 
-    public function getConnection(): ?ConnectionInterface
+    protected function setSingle(string $column, mixed $value = null): static
     {
-        // TODO: Implement getConnection() method.
-    }
+        $this->values[$column] = $value;
 
-    protected function getCompiled(): ?Expression
-    {
-        return $this->compiledQuery ??= $this->getConnection()?->getCompiled($this);
+        return $this;
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Traits;
+namespace Isterkh\QueryBuilder\Compilers\MySql\Traits;
 
 trait WrapColumnsTrait
 {

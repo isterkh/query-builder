@@ -45,10 +45,14 @@ class Expression
         );
     }
 
-    public function wrap(): static
+    public function wrap(string $before = '(', string $after = ')'): static
     {
-        // @phpstan-ignore-next-line
-        return new static("({$this->sql})", $this->bindings);
+        return $this->modifySql(static fn (string $sql) => $before . $sql . $after);
+    }
+
+    public function prefix(string $prefix): static
+    {
+        return $this->modifySql(static fn (string $sql) => $prefix . $sql);
     }
 
     public function getSql(): string
@@ -62,5 +66,29 @@ class Expression
     public function getBindings(): array
     {
         return $this->bindings;
+    }
+
+    public function isEmpty(): bool
+    {
+        return empty($this->sql);
+    }
+
+    /**
+     * @return array<int, mixed[]|string>
+     */
+    public function toArray(): array
+    {
+        return [$this->sql, $this->bindings];
+    }
+
+    protected function modifySql(\Closure $callback): static
+    {
+        if (empty($this->sql)) {
+            return $this;
+        }
+        $new = clone $this;
+        $new->sql = $callback($new->sql);
+
+        return $new;
     }
 }

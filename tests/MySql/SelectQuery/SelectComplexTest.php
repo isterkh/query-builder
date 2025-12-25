@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\MySql\SelectQuery;
 
 use Isterkh\QueryBuilder\Clauses\JoinClause;
+use Isterkh\QueryBuilder\Queries\SelectQuery;
 use Isterkh\QueryBuilder\QueryBuilder;
 use Tests\MySql\QueryTestTemplate;
 
@@ -47,5 +48,35 @@ class SelectComplexTest extends QueryTestTemplate
             $q->toSql()
         );
         static::assertSame([3], $q->getBindings());
+    }
+
+    public function testEdgeCases(): void
+    {
+        $query = $this->builder
+            ->select(['id', 'name'])
+            ->from('users')
+            ->whereRaw('age > ?', [18])
+            ->whereRaw('')
+            ->where('status', 'active')
+            ->join('profiles', fn (JoinClause $join) => $join)
+            ->groupBy('country', 'city')
+            ->orderBy('name')
+            ->orderBy('id', 'desc')
+            ->limit(10)
+            ->offset(5)
+            ->union(fn (SelectQuery $q) => $q->select('id', 'name')->from('admin')->where('role', 'super'))
+            ->unionAll(fn (SelectQuery $q) => $q->from('guests'))
+        ;
+
+        $sql = $query->toSql();
+
+        static::assertStringContainsString('select `id`, `name` from `users`', $sql);
+        static::assertStringContainsString('where age > ? and `status` = ?', $sql);
+        static::assertStringContainsString('group by `country`, `city`', $sql);
+        static::assertStringContainsString('order by `name` asc, `id` desc', $sql);
+        static::assertStringContainsString('limit 10 offset 5', $sql);
+        static::assertStringContainsString('union', $sql);
+
+        static::assertSame([18, 'active', 'super'], $query->getBindings());
     }
 }

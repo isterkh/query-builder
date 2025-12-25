@@ -73,7 +73,7 @@ class SimpleSelectTest extends QueryTestTemplate
             ->selectRaw($sql, $bindings)
             ->from('salaries')
         ;
-        $result = 'select '.$sql.' from `salaries`';
+        $result = 'select ' . $sql . ' from `salaries`';
         static::assertSame($result, $query->toSql());
         static::assertSame($bindings, $query->getBindings());
     }

@@ -18,7 +18,7 @@ class JoinClause implements HasConditionInterface
 
     public function __construct(
         protected TableReference $from,
-        protected JoinTypeEnum   $type,
+        protected JoinTypeEnum $type,
         protected ConditionGroup $conditions,
     ) {}
 

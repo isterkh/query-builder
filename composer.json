@@ -19,7 +19,10 @@
     }
   ],
   "scripts": {
-    "test": ["phpunit", "phpstan analyze"]
+    "test": ["phpunit"],
+    "stan": ["phpstan analyze"],
+    "fix": "php-cs-fixer fix",
+    "check": ["@fix", "@stan", "@test"]
   },
   "require-dev": {
     "phpunit/phpunit": "^12",

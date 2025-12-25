@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers\MySql;
 
+use Isterkh\QueryBuilder\Compilers\MySql\Traits\MakeExpressionTrait;
+use Isterkh\QueryBuilder\Compilers\MySql\Traits\WrapColumnsTrait;
 use Isterkh\QueryBuilder\Condition\Condition;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Exceptions\UnsupportedOperatorException;
 use Isterkh\QueryBuilder\Expressions\Expression;
-use Isterkh\QueryBuilder\Traits\WrapColumnsTrait;
 
 class ConditionsCompiler
 {
     use WrapColumnsTrait;
+    use MakeExpressionTrait;
 
     /**
      * @var array|string[]
@@ -46,26 +48,27 @@ class ConditionsCompiler
     // TODO: Сделать адекватнее проверку на пустые условия.
     public function compile(ConditionGroup $conditionGroup): Expression
     {
-        $parts = [];
-        $bindings = [];
+        return $this->makeExpression(
+            source: $conditionGroup->getConditions(),
+            separator: $conditionGroup->isOr() ? ' or ' : ' and ',
+            formatted: fn (int $i, Condition|ConditionGroup|Expression $cond) => $this->conditionToArray($cond)
+        );
+    }
 
-        foreach ($conditionGroup->getConditions() as $condition) {
-            if ($condition instanceof ConditionGroup) {
-                if ($condition->isEmpty()) {
-                    continue;
-                }
-                $compiled = $this->compile($condition)->wrap();
-                $parts[] = $compiled->getSql();
-                $bindings = array_merge($bindings, $compiled->getBindings());
-            } else {
-                $compiled = $this->compileSingleCondition($condition);
-                $parts[] = $compiled->getSql();
-                $bindings = array_merge($bindings, $compiled->getBindings());
-            }
+    /**
+     * @return array<mixed[]|string>
+     */
+    protected function conditionToArray(
+        Condition|ConditionGroup|Expression $condition,
+    ): array {
+        if ($condition instanceof Expression) {
+            return $condition->toArray();
         }
-        $separator = $conditionGroup->isOr() ? ' or ' : ' and ';
+        if ($condition instanceof ConditionGroup) {
+            return $this->compile($condition)->wrap()->toArray();
+        }
 
-        return new Expression(implode($separator, $parts), $bindings);
+        return $this->compileSingleCondition($condition)->toArray();
     }
 
     protected function compileSingleCondition(Condition|Expression $condition): Expression
@@ -92,7 +95,7 @@ class ConditionsCompiler
         if (!empty($this->specialHandlers[$operator])) {
             $handler = $this->specialHandlers[$operator];
             if (!method_exists($this, $handler)) {
-                throw new CompilerException('Cannot compile operator '.$operator);
+                throw new CompilerException('Cannot compile operator ' . $operator);
             }
 
             return $this->{$handler}($preparedCondition);

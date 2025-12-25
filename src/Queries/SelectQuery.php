@@ -7,19 +7,23 @@ namespace Isterkh\QueryBuilder\Queries;
 use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Clauses\UnionClause;
-use Isterkh\QueryBuilder\Clauses\WhereClause;
 use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
+use Isterkh\QueryBuilder\Contracts\HasWhereInterface;
 use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use Isterkh\QueryBuilder\Expressions\Expression;
+use Isterkh\QueryBuilder\Traits\HasWhereTrait;
+use Isterkh\QueryBuilder\Traits\QueryConnectionTrait;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
-class SelectQuery implements LazyQueryInterface
+class SelectQuery implements LazyQueryInterface, HasWhereInterface
 {
+    use HasWhereTrait;
+    use QueryConnectionTrait;
     use WhereAliasTrait;
 
     protected ?TableReference $from = null;
@@ -34,7 +38,6 @@ class SelectQuery implements LazyQueryInterface
      * @var JoinClause[]
      */
     protected array $joins = [];
-    protected ?WhereClause $where = null;
 
     /**
      * @var array<int|string, Expression|string>
@@ -69,13 +72,6 @@ class SelectQuery implements LazyQueryInterface
     public function __construct(
         protected ?WithClause $cte = null
     ) {}
-
-    public function setConnection(?ConnectionInterface $connection = null): static
-    {
-        $this->connection = $connection;
-
-        return $this;
-    }
 
     /**
      * @param array<int|string, int|string>|string $columns
@@ -132,36 +128,6 @@ class SelectQuery implements LazyQueryInterface
     public function rightJoin(string $table, \Closure $condition, ?string $alias = null): static
     {
         return $this->join($table, $condition, $alias, JoinTypeEnum::RIGHT);
-    }
-
-    public function where(
-        \Closure|string $column,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
-    ): static {
-        $this->getOrCreateWhere()->where($column, $operatorOrValue, $value);
-
-        return $this;
-    }
-
-    public function orWhere(
-        \Closure|string $column,
-        mixed $operatorOrValue = null,
-        mixed $value = null,
-    ): static {
-        $this->getOrCreateWhere()->orWhere($column, $operatorOrValue, $value);
-
-        return $this;
-    }
-
-    /**
-     * @param array<int, mixed> $bindings
-     */
-    public function whereRaw(string $sql, array $bindings = []): static
-    {
-        $this->getOrCreateWhere()->whereRaw($sql, $bindings);
-
-        return $this;
     }
 
     public function groupBy(string ...$columns): static
@@ -286,11 +252,6 @@ class SelectQuery implements LazyQueryInterface
         return $this->from;
     }
 
-    public function getWhere(): ?WhereClause
-    {
-        return $this->where;
-    }
-
     /**
      * @return JoinClause[]
      */
@@ -355,19 +316,6 @@ class SelectQuery implements LazyQueryInterface
         return $this;
     }
 
-    public function toSql(): ?string
-    {
-        return $this->getCompiled()?->getSql();
-    }
-
-    /**
-     * @return array<mixed>
-     */
-    public function getBindings(): array
-    {
-        return $this->getCompiled()?->getBindings() ?? [];
-    }
-
     public function getOrCreateHaving(): HavingClause
     {
         return $this->having ??= new HavingClause(
@@ -404,11 +352,6 @@ class SelectQuery implements LazyQueryInterface
     public function isLazy(): bool
     {
         return $this->lazy;
-    }
-
-    public function getConnection(): ?ConnectionInterface
-    {
-        return $this->connection;
     }
 
     protected function newInstance(): self
@@ -459,17 +402,5 @@ class SelectQuery implements LazyQueryInterface
         }
 
         return $result;
-    }
-
-    protected function getOrCreateWhere(): WhereClause
-    {
-        return $this->where ??= new WhereClause(
-            new ConditionGroup()
-        );
-    }
-
-    protected function getCompiled(): ?Expression
-    {
-        return $this->compiledQuery ??= $this->getConnection()?->getCompiled($this);
     }
 }

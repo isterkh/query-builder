@@ -49,6 +49,7 @@ class LimitOffsetTest extends SelectQueryTestTemplate
         $this->expectException(QueryBuilderException::class);
         $this->expectExceptionMessage('Offset should be greater than 0');
         $q = $this->query
-            ->offset(-5);
+            ->offset(-5)
+        ;
     }
 }

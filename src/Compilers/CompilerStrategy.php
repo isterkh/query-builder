@@ -37,7 +37,7 @@ class CompilerStrategy implements CompilerInterface
             }
         }
 
-        throw new CompilerNotFoundException('Compiler not found for query: '.$query::class);
+        throw new CompilerNotFoundException('Compiler not found for query: ' . $query::class);
     }
 
     public function supports(QueryInterface $query): bool

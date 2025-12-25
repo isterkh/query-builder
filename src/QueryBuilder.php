@@ -7,6 +7,8 @@ namespace Isterkh\QueryBuilder;
 use Isterkh\QueryBuilder\Clauses\WithClause;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
+use Isterkh\QueryBuilder\Queries\UpdateQuery;
+use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class QueryBuilder
 {
@@ -36,6 +38,13 @@ class QueryBuilder
     public function selectRaw(string $sql, array $bindings = []): SelectQuery
     {
         return $this->newSelectQuery()->selectRaw($sql, $bindings);
+    }
+
+    public function update(string $table, ?string $alias = null): UpdateQuery
+    {
+        return new UpdateQuery(
+            new TableReference($table, $alias),
+        )->setConnection($this->connection);
     }
 
     protected function newInstance(): self
