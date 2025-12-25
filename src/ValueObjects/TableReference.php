@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Clauses;
+namespace Isterkh\QueryBuilder\ValueObjects;
 
-class FromClause
+class TableReference
 {
     public function __construct(
         protected string $table,

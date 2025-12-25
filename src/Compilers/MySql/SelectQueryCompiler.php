@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers\MySql;
 
-use Isterkh\QueryBuilder\Clauses\FromClause;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerDoesNotSupportsQuery;
@@ -12,6 +11,7 @@ use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
 use Isterkh\QueryBuilder\Traits\WrapColumnsTrait;
+use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class SelectQueryCompiler implements CompilerInterface
 {
@@ -145,7 +145,7 @@ class SelectQueryCompiler implements CompilerInterface
         return new Expression(implode(' ', $parts), $bindings);
     }
 
-    protected function compileFrom(FromClause $from): string
+    protected function compileFrom(TableReference $from): string
     {
         $table = $this->wrap($from->getTable());
         if (!empty($from->getAlias())) {

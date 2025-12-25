@@ -23,7 +23,7 @@ class QueryBuilder
     }
 
     /**
-     * @param array<int|string, int|string>|string $columns
+     * @param array<mixed>|string ...$columns
      */
     public function select(array|string ...$columns): SelectQuery
     {

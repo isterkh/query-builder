@@ -13,9 +13,6 @@
          colors="true"
          failOnWarning="true">
     <testsuites>
-        <testsuite name="mysql">
-            <directory>tests/Mysql</directory>
-        </testsuite>
         <testsuite name="default">
             <directory>tests</directory>
         </testsuite>

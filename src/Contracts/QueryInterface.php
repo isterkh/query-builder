@@ -12,4 +12,8 @@ interface QueryInterface
      * @return mixed[]
      */
     public function getBindings(): array;
+
+    public function setConnection(?ConnectionInterface $connection = null): static;
+
+    public function getConnection(): ?ConnectionInterface;
 }

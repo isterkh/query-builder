@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Queries;
 
-use Isterkh\QueryBuilder\Clauses\FromClause;
 use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Clauses\UnionClause;
@@ -17,12 +16,13 @@ use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
+use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class SelectQuery implements LazyQueryInterface
 {
     use WhereAliasTrait;
 
-    protected ?FromClause $from = null;
+    protected ?TableReference $from = null;
 
     /**
      * @var Expression[]|string[]
@@ -106,7 +106,7 @@ class SelectQuery implements LazyQueryInterface
 
     public function from(string $table, ?string $alias = null): static
     {
-        $this->from = new FromClause($table, $alias);
+        $this->from = new TableReference($table, $alias);
 
         return $this;
     }
@@ -114,7 +114,7 @@ class SelectQuery implements LazyQueryInterface
     public function join(string $table, \Closure $condition, ?string $alias = null, JoinTypeEnum $type = JoinTypeEnum::INNER): static
     {
         $joinClause = new JoinClause(
-            new FromClause($table, $alias),
+            new TableReference($table, $alias),
             $type,
             new ConditionGroup()
         );
@@ -281,7 +281,7 @@ class SelectQuery implements LazyQueryInterface
         return $this->columns;
     }
 
-    public function getFrom(): ?FromClause
+    public function getFrom(): ?TableReference
     {
         return $this->from;
     }
@@ -406,6 +406,11 @@ class SelectQuery implements LazyQueryInterface
         return $this->lazy;
     }
 
+    public function getConnection(): ?ConnectionInterface
+    {
+        return $this->connection;
+    }
+
     protected function newInstance(): self
     {
         return new self()
@@ -465,6 +470,6 @@ class SelectQuery implements LazyQueryInterface
 
     protected function getCompiled(): ?Expression
     {
-        return $this->compiledQuery ??= $this->connection?->getCompiled($this);
+        return $this->compiledQuery ??= $this->getConnection()?->getCompiled($this);
     }
 }

@@ -9,6 +9,7 @@ use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
+use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class JoinClause implements HasConditionInterface
 {
@@ -16,8 +17,8 @@ class JoinClause implements HasConditionInterface
     use WhereAliasTrait;
 
     public function __construct(
-        protected FromClause $from,
-        protected JoinTypeEnum $type,
+        protected TableReference $from,
+        protected JoinTypeEnum   $type,
         protected ConditionGroup $conditions,
     ) {}
 
@@ -63,7 +64,7 @@ class JoinClause implements HasConditionInterface
         return $this->type;
     }
 
-    public function getFrom(): FromClause
+    public function getFrom(): TableReference
     {
         return $this->from;
     }
