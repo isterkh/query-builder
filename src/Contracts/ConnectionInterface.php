@@ -17,4 +17,10 @@ interface ConnectionInterface
     public function execute(QueryBuilder $query): int;
 
     public function getCompiled(QueryBuilder $query): Expression;
+
+    public function beginTransaction(): bool;
+
+    public function commit(): bool;
+
+    public function rollback(): bool;
 }

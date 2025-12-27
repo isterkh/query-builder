@@ -13,6 +13,7 @@ use Isterkh\QueryBuilder\Components\UnionClause;
 use Isterkh\QueryBuilder\Components\WithClause;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Enum\QueryTypeEnum;
+use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use Isterkh\QueryBuilder\Traits\QueryComponentsTrait;
 use Isterkh\QueryBuilder\Traits\QueryConnectionTrait;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
@@ -30,6 +31,9 @@ class QueryBuilder
      * @var Expression[]|string[]
      */
     protected array $columns = [];
+
+    protected array $updateValues = [];
+    protected array $insertValues = [];
     protected bool $isDistinct = false;
 
     protected ?Expression $compiledQuery = null;
@@ -158,19 +162,41 @@ class QueryBuilder
         return $this;
     }
 
-    public function update(): int
-    {
-        return 0;
+    public function update(
+        array $values
+    ): static {
+        if (empty($values)) {
+            throw new QueryBuilderException('Values cannot be empty');
+        }
+        if (array_is_list($values)) {
+            throw new QueryBuilderException('Values must be an associative array [column => value]');
+        }
+
+        $this->type = QueryTypeEnum::UPDATE;
+        $this->updateValues = $values;
+
+        return $this;
     }
 
-    public function delete(): int
+    public function delete(): static
     {
-        return 0;
+        $this->type = QueryTypeEnum::DELETE;
+
+        return $this;
     }
 
-    public function insert(): int
+    public function insert(array $values): static
     {
-        return 0;
+        if (empty($values)) {
+            throw new QueryBuilderException('Values cannot be empty');
+        }
+        if (array_is_list($values)) {
+            throw new QueryBuilderException('Values must be an associative array [column => value]');
+        }
+        $this->type = QueryTypeEnum::INSERT;
+        $this->insertValues = $values;
+
+        return $this;
     }
 
     public function getOrCreateHaving(): HavingClause
@@ -211,14 +237,34 @@ class QueryBuilder
         return $this->connection?->query($this);
     }
 
+    public function execute(): ?int
+    {
+        return $this->connection?->execute($this);
+    }
+
     public function isLazy(): bool
     {
         return $this->lazy;
     }
 
+    public function getType(): QueryTypeEnum
+    {
+        return $this->type;
+    }
+
+    public function getUpdateValues(): array
+    {
+        return $this->updateValues;
+    }
+
+    public function getInsertValues(): array
+    {
+        return $this->insertValues;
+    }
+
     protected function newInstance(): self
     {
-        return new self()
+        return (new self())
             ->setConnection($this->connection)
         ;
     }

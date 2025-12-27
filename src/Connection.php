@@ -40,6 +40,21 @@ class Connection implements ConnectionInterface
         return $this->compiler->compile($query);
     }
 
+    public function beginTransaction(): bool
+    {
+        return $this->pdo->beginTransaction();
+    }
+
+    public function commit(): bool
+    {
+        return $this->pdo->commit();
+    }
+
+    public function rollback(): bool
+    {
+        return $this->pdo->rollBack();
+    }
+
     protected function executeQuery(QueryBuilder $query): \PDOStatement
     {
         $compiled = $this->compiler->compile($query);

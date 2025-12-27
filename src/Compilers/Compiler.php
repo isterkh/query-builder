@@ -24,34 +24,15 @@ class Compiler
 
     public function compile(QueryBuilder $query): Expression
     {
-        $cte = $this->compileCte($query);
-
-        $main = $this->makeExpression([
-            $this->compileSelect($query),
-            $this->compileJoins($query),
-            $this->compileWhere($query),
-            $this->compileGroupBy($query),
-            $this->compileHaving($query),
-            $this->compileOrderBy($query),
-            $this->compileLimit($query),
-            $this->compileOffset($query),
-        ]);
-
-        $unions = $this->compileUnions($query);
-
-        if ($unions) {
-            $main = $main->wrap();
-
-            $unions = $unions->merge(
-                $this->makeExpression([
-                    $this->compileOrderBy($query, true),
-                    $this->compileLimit($query, true),
-                    $this->compileOffset($query, true),
-                ])
-            );
+        if (empty($query->getTable())) {
+            throw new CompilerException('Missing from clause');
+        }
+        $method = 'compile' . ucfirst($query->getType()->value);
+        if (!method_exists($this, $method)) {
+            throw new CompilerException('Cannot compile query: ' . $query->getType()->value);
         }
 
-        return $this->makeExpression([$cte, $main, $unions]);
+        return $this->{$method}($query);
     }
 
     /**
@@ -101,6 +82,76 @@ class Compiler
         return $builder->get();
     }
 
+    protected function compileSelect(QueryBuilder $query): Expression
+    {
+        $cte = $this->compileCte($query);
+
+        $main = $this->makeExpression([
+            $this->compileSelectStatement($query),
+            $this->compileJoins($query),
+            $this->compileWhere($query),
+            $this->compileGroupBy($query),
+            $this->compileHaving($query),
+            $this->compileOrderBy($query),
+            $this->compileLimit($query),
+            $this->compileOffset($query),
+        ]);
+
+        $unions = $this->compileUnions($query);
+
+        if ($unions) {
+            $main = $main->wrap();
+
+            $unions = $unions->merge(
+                $this->makeExpression([
+                    $this->compileOrderBy($query, true),
+                    $this->compileLimit($query, true),
+                    $this->compileOffset($query, true),
+                ])
+            );
+        }
+
+        return $this->makeExpression([$cte, $main, $unions]);
+    }
+
+    protected function compileUpdate(QueryBuilder $query): Expression
+    {
+        return $this->makeExpression([
+            $this->compileCte($query),
+            $this->compileUpdateStatement($query),
+            $this->compileWhere($query),
+        ]);
+    }
+
+    protected function compileDelete(QueryBuilder $query): Expression
+    {
+        $table = $this->compileTable($query->getTable());
+
+        return $this->makeExpression([
+            new Expression("delete from {$table}"),
+            $this->compileWhere($query),
+        ]);
+    }
+
+    protected function compileInsert(QueryBuilder $query): Expression
+    {
+        $columns = implode(', ', array_map(fn ($item) => $this->wrap($item), array_keys($query->getInsertValues())));
+
+        $table = $this->compileTable($query->getTable());
+        $prefix = "insert into {$table} ({$columns}) values (";
+        $suffix = ')';
+
+        return $this->makeExpression(
+            source: $query->getInsertValues(),
+            separator: ', ',
+            formatted: fn ($key, $item) => ['?', [$item]],
+            prefix: $prefix,
+            suffix: $suffix,
+        );
+    }
+
+    protected function compileRaw(QueryBuilder $query): Expression {}
+
     protected function compileTable(TableReference $from): string
     {
         $table = $this->wrap($from->getTable());
@@ -146,12 +197,8 @@ class Compiler
         );
     }
 
-    protected function compileSelect(QueryBuilder $query): ?Expression
+    protected function compileSelectStatement(QueryBuilder $query): ?Expression
     {
-        if (empty($query->getTable())) {
-            throw new CompilerException('Missing from clause');
-        }
-
         $prefix = 'select '
             . ($query->isDistinct() ? 'distinct ' : '');
         $suffix = ' from ' . $this->compileTable($query->getTable());
@@ -162,6 +209,18 @@ class Compiler
             formatted: fn ($key, $item) => [$this->wrap(is_string($key) ? "{$key} as {$item}" : "{$item}")],
             prefix: $prefix,
             suffix: $suffix,
+        );
+    }
+
+    protected function compileUpdateStatement(QueryBuilder $query): ?Expression
+    {
+        $prefix = 'update ' . $this->compileTable($query->getTable()) . ' set ';
+
+        return $this->makeExpression(
+            source: $query->getUpdateValues(),
+            separator: ', ',
+            formatted: fn ($key, $item) => ["{$this->wrap($key)} = ?", [$item]],
+            prefix: $prefix
         );
     }
 
