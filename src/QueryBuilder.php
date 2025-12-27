@@ -169,7 +169,6 @@ class QueryBuilder
 
     /**
      * @param mixed[] $values
-     * @return static
      */
     public function update(
         array $values
@@ -196,7 +195,6 @@ class QueryBuilder
 
     /**
      * @param mixed[] $values
-     * @return static
      */
     public function insert(array $values): static
     {
@@ -281,6 +279,26 @@ class QueryBuilder
         return $this->insertValues;
     }
 
+    /**
+     * @param mixed[] $bindings
+     */
+    public function raw(string $sql, array $bindings = []): static
+    {
+        $this->type = QueryTypeEnum::RAW;
+        $this->compiledQuery = new Expression($sql, $bindings);
+
+        return $this;
+    }
+
+    public function getRaw(): ?Expression
+    {
+        if ($this->type !== QueryTypeEnum::RAW) {
+            return null;
+        }
+
+        return $this->compiledQuery;
+    }
+
     protected function newInstance(): self
     {
         return (new self())
@@ -288,17 +306,6 @@ class QueryBuilder
         ;
     }
 
-    /**
-     * @param string $sql
-     * @param mixed[] $bindings
-     * @return static
-     */
-    public function raw(string $sql, array $bindings = []): static
-    {
-        $this->type = QueryTypeEnum::RAW;
-        $this->compiledQuery = new Expression($sql, $bindings);
-        return $this;
-    }
     /**
      * @param array<mixed, mixed> $columns
      *
@@ -338,13 +345,5 @@ class QueryBuilder
         }
 
         return array_filter($result);
-    }
-
-    public function getRaw(): ?Expression
-    {
-        if ($this->type !== QueryTypeEnum::RAW) {
-            return null;
-        }
-        return $this->compiledQuery;
     }
 }
