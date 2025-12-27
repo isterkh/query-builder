@@ -2,11 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Tests\MySql\SelectQuery;
+namespace Tests\Select;
 
 use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
-use Isterkh\QueryBuilder\Queries\SelectQuery;
+
+use Isterkh\QueryBuilder\QB;
 use Isterkh\QueryBuilder\QueryBuilder;
 
 /**
@@ -22,7 +23,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         $q = $this->query
             ->where('a', 10)
             ->union(
-                fn (SelectQuery $q) => $q->select('*')
+                fn (QB $q) => $q->select('*')
                     ->from('t2')
                     ->where('b', 20)
             )
@@ -39,7 +40,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         $q = $this->query
             ->where('a', 10)
             ->unionAll(
-                fn (SelectQuery $q) => $q->select('*')
+                fn (QB $q) => $q->select('*')
                     ->from('t2')
                     ->where('b', 20)
             )
@@ -56,11 +57,11 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         $q = $this->query
             ->where('a', 10)
             ->union(
-                fn (SelectQuery $q) => $q->select('*')
+                fn (QB $q) => $q->select('*')
                     ->from('t2')
                     ->where('b', 20)
                     ->unionAll(
-                        fn (SelectQuery $q) => $q->select('*')
+                        fn (QB $q) => $q->select('*')
                             ->from('t3')
                             ->where('c', 30)
                     )
@@ -80,7 +81,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
 
         $this->query
             ->where('a', 10)
-            ->union(fn (SelectQuery $q) => $q)
+            ->union(fn (QB $q) => $q)
             ->toSql()
         ;
     }
@@ -92,7 +93,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             ->limit(10)
             ->offset(10)
             ->union(
-                static fn (SelectQuery $q) => $q
+                static fn (QB $q) => $q
                     ->select('*')
                     ->from('t2')
                     ->orderBy('a', 'desc')
@@ -115,13 +116,13 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         $q = $this->builder
             ->with(
                 'salary_rank',
-                fn (QueryBuilder $sub) => $sub
+                fn (QB $sub) => $sub
                     ->selectRaw('id, dense_rank() over (partition by id order by salary desc) as rnk')
                     ->from('salaries')
             )
             ->with(
                 'top_bonuses',
-                fn (QueryBuilder $sub) => $sub
+                fn (QB $sub) => $sub
                     ->selectRaw('id, max(bonus) as bonus')
                     ->groupBy('id')
                     ->from('bonuses')
@@ -158,8 +159,8 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             ->orderBy('id', 'desc')
             ->limit(10)
             ->offset(5)
-            ->union(fn (SelectQuery $q) => $q->select('id', 'name')->from('admin')->where('role', 'super'))
-            ->unionAll(fn (SelectQuery $q) => $q->from('guests'))
+            ->union(fn (QB $q) => $q->select('id', 'name')->from('admin')->where('role', 'super'))
+            ->unionAll(fn (QB $q) => $q->from('guests'))
         ;
 
         $sql = $query->toSql();

@@ -8,7 +8,7 @@ use Isterkh\QueryBuilder\Expressions\Expression;
 
 interface CompilerInterface
 {
-    public function compile(QueryInterface $query): Expression;
+/*    public function compile(QueryInterface $query): Expression;
 
-    public function supports(QueryInterface $query): bool;
+    public function supports(QueryInterface $query): bool;*/
 }

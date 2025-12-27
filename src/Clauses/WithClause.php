@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Isterkh\QueryBuilder\Clauses;
 
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
+use Isterkh\QueryBuilder\QB;
 
 class WithClause
 {
@@ -24,7 +25,7 @@ class WithClause
         return $this;
     }
 
-    public function add(string $alias, QueryInterface $query): static
+    public function add(string $alias, QB $query): static
     {
         $this->queries[$alias] = $query;
 

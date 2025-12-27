@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\MySql\SelectQuery;
+namespace Tests\Select;
 
 use Isterkh\QueryBuilder\Clauses\HavingClause;
 use Isterkh\QueryBuilder\Clauses\JoinClause;
@@ -111,8 +111,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
         $this->expectExceptionMessage('Missing from clause');
         $this->builder
             ->select('a')
-            ->toSql()
-        ;
+            ->toSql();
     }
 
     // JOINS

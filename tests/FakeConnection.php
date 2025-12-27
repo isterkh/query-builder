@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Tests\MySql;
+namespace Tests;
 
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Expressions\Expression;
 
-class FakeMysqlConnection implements ConnectionInterface
+class FakeConnection implements ConnectionInterface
 {
     public function __construct(
         protected CompilerInterface $compiler,

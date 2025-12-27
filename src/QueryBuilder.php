@@ -12,10 +12,23 @@ use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class QueryBuilder
 {
+
+    protected TableReference $table;
+
+
     public function __construct(
         protected ?ConnectionInterface $connection = null,
-        protected WithClause $cte = new WithClause()
-    ) {}
+        protected WithClause           $cte = new WithClause()
+    )
+    {
+    }
+
+    public function table(string $table, ?string $alias = null): static
+    {
+        $this->table = new TableReference($table, $alias);
+
+        return $this;
+    }
 
     public function with(string $alias, \Closure $callback): static
     {
@@ -55,7 +68,6 @@ class QueryBuilder
     protected function newSelectQuery(): SelectQuery
     {
         return new SelectQuery($this->cte)
-            ->setConnection($this->connection)
-        ;
+            ->setConnection($this->connection);
     }
 }
