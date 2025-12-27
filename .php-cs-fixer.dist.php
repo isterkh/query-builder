@@ -14,6 +14,7 @@ return (new Config())
         '@auto:risky' => true,
         '@PhpCsFixer' => true,
         'concat_space' => ['spacing' => 'one'],
+        'yoda_style' => ['equal' => false, 'identical' => false, 'less_and_greater' => false]
     ])
     // 💡 by default, Fixer looks for `*.php` files excluding `./vendor/` - here, you can groom this config
     ->setFinder(

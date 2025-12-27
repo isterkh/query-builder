@@ -12,18 +12,14 @@ use Isterkh\QueryBuilder\Components\TableReference;
 use Isterkh\QueryBuilder\Components\UnionClause;
 use Isterkh\QueryBuilder\Components\WithClause;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
-use Isterkh\QueryBuilder\Contracts\HasWhereInterface;
-use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
 use Isterkh\QueryBuilder\Enum\QueryTypeEnum;
-use Isterkh\QueryBuilder\Traits\HasWhereTrait;
 use Isterkh\QueryBuilder\Traits\QueryComponentsTrait;
 use Isterkh\QueryBuilder\Traits\QueryConnectionTrait;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 
-class QueryBuilder implements LazyQueryInterface, HasWhereInterface
+class QueryBuilder
 {
     use QueryComponentsTrait;
-    use HasWhereTrait;
     use QueryConnectionTrait;
     use WhereAliasTrait;
 
@@ -39,7 +35,8 @@ class QueryBuilder implements LazyQueryInterface, HasWhereInterface
     protected ?Expression $compiledQuery = null;
     protected bool $lazy = false;
 
-    public function __construct(?ConnectionInterface $connection = null) {
+    public function __construct(?ConnectionInterface $connection = null)
+    {
         $this->connection = $connection;
     }
 
@@ -161,11 +158,20 @@ class QueryBuilder implements LazyQueryInterface, HasWhereInterface
         return $this;
     }
 
-    public function update(): int {
-
+    public function update(): int
+    {
+        return 0;
     }
-    public function delete(): int {}
-    public function insert(): int {}
+
+    public function delete(): int
+    {
+        return 0;
+    }
+
+    public function insert(): int
+    {
+        return 0;
+    }
 
     public function getOrCreateHaving(): HavingClause
     {
@@ -214,7 +220,7 @@ class QueryBuilder implements LazyQueryInterface, HasWhereInterface
     {
         return new self()
             ->setConnection($this->connection)
-            ;
+        ;
     }
 
     /**
@@ -224,7 +230,7 @@ class QueryBuilder implements LazyQueryInterface, HasWhereInterface
      */
     protected function normalizeColumns(array $columns): array
     {
-        if (1 === count($columns) && is_array($columns[0])) {
+        if (count($columns) === 1 && is_array($columns[0])) {
             $columns = $columns[0];
         }
         if (empty($columns)) {

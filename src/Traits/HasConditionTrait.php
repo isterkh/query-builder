@@ -56,7 +56,7 @@ trait HasConditionTrait
             return $this;
         }
         $orGroup = new ConditionGroup(true);
-        if (null !== $last) {
+        if ($last !== null) {
             $this->getConditions()->pop();
             $orGroup->add($last);
         }
@@ -73,7 +73,7 @@ trait HasConditionTrait
         mixed $operatorOrValue = null,
         mixed $value = null
     ): array {
-        if (null === $value && !in_array($operatorOrValue, ['=', '!='], true)) {
+        if ($value === null && !in_array($operatorOrValue, ['=', '!='], true)) {
             $value = $operatorOrValue;
             $operator = '=';
         } else {
@@ -85,7 +85,7 @@ trait HasConditionTrait
 
     protected function squashCondition(Condition|ConditionGroup|Expression $condition): Condition|ConditionGroup|Expression
     {
-        return $condition instanceof ConditionGroup && 1 === count($condition->getConditions())
+        return $condition instanceof ConditionGroup && count($condition->getConditions()) === 1
             ? $condition->getConditions()[array_key_first($condition->getConditions())]
             : $condition;
     }

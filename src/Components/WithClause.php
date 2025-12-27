@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Components;
 
-use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\QueryBuilder;
 
 class WithClause
 {
     /**
-     * @var array<string, QueryInterface>
+     * @var array<string, QueryBuilder>
      */
     protected array $queries = [];
 
@@ -43,7 +42,7 @@ class WithClause
     }
 
     /**
-     * @return QueryInterface[]
+     * @return QueryBuilder[]
      */
     public function getQueries(): array
     {

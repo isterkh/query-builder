@@ -111,7 +111,8 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
         $this->expectExceptionMessage('Missing from clause');
         $this->builder
             ->select('a')
-            ->toSql();
+            ->toSql()
+        ;
     }
 
     // JOINS

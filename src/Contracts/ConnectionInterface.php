@@ -5,17 +5,16 @@ declare(strict_types=1);
 namespace Isterkh\QueryBuilder\Contracts;
 
 use Isterkh\QueryBuilder\Components\Expression;
+use Isterkh\QueryBuilder\QueryBuilder;
 
 interface ConnectionInterface
 {
-    public function getCompiler(): CompilerInterface;
-
     /**
      * @return iterable<mixed>
      */
-    public function query(QueryInterface $query): iterable;
+    public function query(QueryBuilder $query): iterable;
 
-    public function execute(QueryInterface $query): int;
+    public function execute(QueryBuilder $query): int;
 
-    public function getCompiled(QueryInterface $query): Expression;
+    public function getCompiled(QueryBuilder $query): Expression;
 }

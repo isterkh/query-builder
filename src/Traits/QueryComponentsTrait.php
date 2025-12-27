@@ -1,6 +1,6 @@
 <?php
-declare(strict_types=1);
 
+declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Traits;
 
@@ -10,6 +10,7 @@ use Isterkh\QueryBuilder\Components\HavingClause;
 use Isterkh\QueryBuilder\Components\JoinClause;
 use Isterkh\QueryBuilder\Components\TableReference;
 use Isterkh\QueryBuilder\Components\UnionClause;
+use Isterkh\QueryBuilder\Components\WhereClause;
 use Isterkh\QueryBuilder\Components\WithClause;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
@@ -22,6 +23,8 @@ trait QueryComponentsTrait
      * @var JoinClause[]
      */
     protected array $joins = [];
+
+    protected ?WhereClause $where = null;
 
     /**
      * @var array<int|string, Expression|string>
@@ -78,6 +81,41 @@ trait QueryComponentsTrait
     public function rightJoin(string $table, \Closure $condition, ?string $alias = null): static
     {
         return $this->join($table, $condition, $alias, JoinTypeEnum::RIGHT);
+    }
+
+    public function where(
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
+        $this->getOrCreateWhere()->where($column, $operatorOrValue, $value);
+
+        return $this;
+    }
+
+    public function orWhere(
+        \Closure|string $column,
+        mixed $operatorOrValue = null,
+        mixed $value = null,
+    ): static {
+        $this->getOrCreateWhere()->orWhere($column, $operatorOrValue, $value);
+
+        return $this;
+    }
+
+    /**
+     * @param array<int, mixed> $bindings
+     */
+    public function whereRaw(string $sql, array $bindings = []): static
+    {
+        $this->getOrCreateWhere()->whereRaw($sql, $bindings);
+
+        return $this;
+    }
+
+    public function getWhere(): ?WhereClause
+    {
+        return $this->where;
     }
 
     public function groupBy(string ...$columns): static
@@ -187,5 +225,12 @@ trait QueryComponentsTrait
     public function unionAll(\Closure $callback): static
     {
         return $this->union($callback, true);
+    }
+
+    protected function getOrCreateWhere(): WhereClause
+    {
+        return $this->where ??= new WhereClause(
+            new ConditionGroup()
+        );
     }
 }

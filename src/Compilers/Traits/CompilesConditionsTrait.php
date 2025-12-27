@@ -8,22 +8,9 @@ use Isterkh\QueryBuilder\Components\Condition;
 use Isterkh\QueryBuilder\Components\ConditionGroup;
 use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
-use Isterkh\QueryBuilder\Exceptions\UnsupportedOperatorException;
 
 trait CompilesConditionsTrait
 {
-
-    /**
-     * @var array|string[]
-     */
-    protected array $operators = [
-        '=', '!=', '<>', '<', '>', '<=', '>=',
-        'in', 'not in',
-        'between', 'not between',
-        'like', 'not like',
-        'is', 'is not',
-    ];
-
     /**
      * @var array|string[]
      */
@@ -73,7 +60,6 @@ trait CompilesConditionsTrait
             return $condition;
         }
         $operator = $condition->getOperator();
-        $this->ensureOperatorIsSupported($operator);
 
         $value = $condition->getValue();
 
@@ -84,16 +70,12 @@ trait CompilesConditionsTrait
             $condition->isRightIsColumn()
         );
 
-        if (null === $value && in_array($operator, $this->exactEqualityOperators, true)) {
+        if ($value === null && in_array($operator, $this->exactEqualityOperators, true)) {
             return $this->compileNullCondition($preparedCondition);
         }
 
-        if (!empty($this->specialHandlers[$operator])) {
-            $handler = $this->specialHandlers[$operator];
-            if (!method_exists($this, $handler)) {
-                throw new CompilerException('Cannot compile operator ' . $operator);
-            }
-
+        $handler = $this->specialHandlers[$operator] ?? null;
+        if ($handler) {
             return $this->{$handler}($preparedCondition);
         }
 
@@ -102,7 +84,7 @@ trait CompilesConditionsTrait
 
     protected function compileNullCondition(Condition $condition): Expression
     {
-        $operator = '=' === $condition->getOperator() ? 'is' : 'is not';
+        $operator = $condition->getOperator() === '=' ? 'is' : 'is not';
 
         return new Expression("{$condition->getColumn()} {$operator} null");
     }
@@ -110,7 +92,7 @@ trait CompilesConditionsTrait
     protected function compileBetweenCondition(Condition $condition): Expression
     {
         $value = $condition->getValue();
-        if (2 !== count($value)) {
+        if (count($value) !== 2) {
             throw new CompilerException('There must be exactly two values for between condition');
         }
         if ($condition->isRightIsColumn()) {
@@ -151,12 +133,5 @@ trait CompilesConditionsTrait
             "{$condition->getColumn()} {$condition->getOperator()} ?",
             [$condition->getValue()]
         );
-    }
-
-    protected function ensureOperatorIsSupported(string $operator): void
-    {
-        if (!in_array($operator, $this->operators, true)) {
-            throw new UnsupportedOperatorException("Unsupported operator '{$operator}'");
-        }
     }
 }

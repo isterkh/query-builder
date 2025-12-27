@@ -4,50 +4,44 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Connection;
 
+use Isterkh\QueryBuilder\Compilers\Compiler;
 use Isterkh\QueryBuilder\Components\Expression;
-use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
-use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
-use Isterkh\QueryBuilder\Contracts\QueryInterface;
+use Isterkh\QueryBuilder\QueryBuilder;
 
 class PdoConnection implements ConnectionInterface
 {
     public function __construct(
-        protected CompilerInterface $compiler,
+        protected Compiler $compiler,
         protected \PDO $pdo,
     ) {}
-
-    public function getCompiler(): CompilerInterface
-    {
-        return $this->compiler;
-    }
 
     /**
      * @return iterable<mixed>
      */
-    public function query(QueryInterface $query): iterable
+    public function query(QueryBuilder $query): iterable
     {
         $stmt = $this->executeQuery($query);
-        if ($query instanceof LazyQueryInterface && $query->isLazy()) {
+        if ($query->isLazy()) {
             return $this->lazyFetch($stmt);
         }
 
         return $stmt->fetchAll();
     }
 
-    public function execute(QueryInterface $query): int
+    public function execute(QueryBuilder $query): int
     {
         $stmt = $this->executeQuery($query);
 
         return $stmt->rowCount();
     }
 
-    public function getCompiled(QueryInterface $query): Expression
+    public function getCompiled(QueryBuilder $query): Expression
     {
         return $this->compiler->compile($query);
     }
 
-    protected function executeQuery(QueryInterface $query): \PDOStatement
+    protected function executeQuery(QueryBuilder $query): \PDOStatement
     {
         $compiled = $this->compiler->compile($query);
         $stmt = $this->pdo->prepare($query->toSql() ?? '');
