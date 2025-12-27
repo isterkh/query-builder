@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Tests\Select;
+namespace Tests\MySql;
 
 use Isterkh\QueryBuilder\QueryBuilder;
-use Tests\QueryTestTemplate;
 
 abstract class SelectQueryTestTemplate extends QueryTestTemplate
 {

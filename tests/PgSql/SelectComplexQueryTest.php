@@ -2,11 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Select;
+namespace Tests\PgSql;
 
 use Isterkh\QueryBuilder\Components\JoinClause;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
-
 use Isterkh\QueryBuilder\QueryBuilder;
 
 /**
@@ -28,7 +27,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             )
         ;
         static::assertSame(
-            '(select * from `t` where `a` = ?) union (select * from `t2` where `b` = ?)',
+            '(select * from "t" where "a" = ?) union (select * from "t2" where "b" = ?)',
             $q->toSql()
         );
         static::assertSame([10, 20], $q->getBindings());
@@ -45,7 +44,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             )
         ;
         static::assertSame(
-            '(select * from `t` where `a` = ?) union all (select * from `t2` where `b` = ?)',
+            '(select * from "t" where "a" = ?) union all (select * from "t2" where "b" = ?)',
             $q->toSql()
         );
         static::assertSame([10, 20], $q->getBindings());
@@ -67,7 +66,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             )
         ;
         static::assertSame(
-            '(select * from `t` where `a` = ?) union ((select * from `t2` where `b` = ?) union all (select * from `t3` where `c` = ?))',
+            '(select * from "t" where "a" = ?) union ((select * from "t2" where "b" = ?) union all (select * from "t3" where "c" = ?))',
             $q->toSql()
         );
         static::assertSame([10, 20, 30], $q->getBindings());
@@ -105,7 +104,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         ;
 
         static::assertSame(
-            '(select * from `t` order by `a` asc limit 10 offset 10) union (select * from `t2` order by `a` desc limit 5 offset 5) order by `b` desc limit 5 offset 50',
+            '(select * from "t" order by "a" asc limit 10 offset 10) union (select * from "t2" order by "a" desc limit 5 offset 5) order by "b" desc limit 5 offset 50',
             $q->toSql()
         );
     }
@@ -138,7 +137,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
             ->where('sr.rnk', '<=', 3)
         ;
         static::assertSame(
-            'with `salary_rank` as (select id, dense_rank() over (partition by id order by salary desc) as rnk from `salaries`), `top_bonuses` as (select id, max(bonus) as bonus from `bonuses` group by `id`) select `id`, `salary`, `bonus`, `rnk` as `rank` from `salary_rank` as `sr` inner join `top_bonuses` as `tb` on `sr`.`id` = `tb`.`id` and `tb`.`bonus` >= `sr`.`salary` where `sr`.`rnk` <= ?',
+            'with "salary_rank" as (select id, dense_rank() over (partition by id order by salary desc) as rnk from "salaries"), "top_bonuses" as (select id, max(bonus) as bonus from "bonuses" group by "id") select "id", "salary", "bonus", "rnk" as "rank" from "salary_rank" as "sr" inner join "top_bonuses" as "tb" on "sr"."id" = "tb"."id" and "tb"."bonus" >= "sr"."salary" where "sr"."rnk" <= ?',
             $q->toSql()
         );
         static::assertSame([3], $q->getBindings());
@@ -164,10 +163,10 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
 
         $sql = $query->toSql();
 
-        static::assertStringContainsString('select `id`, `name` from `users`', $sql);
-        static::assertStringContainsString('where age > ? and `status` = ?', $sql);
-        static::assertStringContainsString('group by `country`, `city`', $sql);
-        static::assertStringContainsString('order by `name` asc, `id` desc', $sql);
+        static::assertStringContainsString('select "id", "name" from "users"', $sql);
+        static::assertStringContainsString('where age > ? and "status" = ?', $sql);
+        static::assertStringContainsString('group by "country", "city"', $sql);
+        static::assertStringContainsString('order by "name" asc, "id" desc', $sql);
         static::assertStringContainsString('limit 10 offset 5', $sql);
         static::assertStringContainsString('union', $sql);
 

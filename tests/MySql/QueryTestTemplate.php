@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests;
+namespace Tests\MySql;
 
 use Isterkh\QueryBuilder\Compilers\Grammar\MySqlGrammar;
 use Isterkh\QueryBuilder\Compilers\SqlCompiler;
 use Isterkh\QueryBuilder\QueryBuilder;
 use PHPUnit\Framework\TestCase;
+use Tests\FakeConnection;
 
 abstract class QueryTestTemplate extends TestCase
 {

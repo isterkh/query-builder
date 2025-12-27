@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers;
 
-use Isterkh\QueryBuilder\Compilers\Traits\BasicCompilerTrait;
 use Isterkh\QueryBuilder\Compilers\Traits\CompilesConditionsTrait;
 use Isterkh\QueryBuilder\Components\Expression;
+use Isterkh\QueryBuilder\Components\ExpressionBuilder;
 use Isterkh\QueryBuilder\Components\JoinClause;
 use Isterkh\QueryBuilder\Components\TableReference;
 use Isterkh\QueryBuilder\Components\UnionClause;
@@ -14,14 +14,11 @@ use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\GrammarInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
-use Isterkh\QueryBuilder\Queries\SelectQuery;
 use Isterkh\QueryBuilder\QueryBuilder;
 
 class SqlCompiler implements CompilerInterface
 {
-    use BasicCompilerTrait;
     use CompilesConditionsTrait;
-
     public function __construct(
         protected GrammarInterface $grammar,
     )
@@ -240,5 +237,52 @@ class SqlCompiler implements CompilerInterface
         }
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * @param null|mixed[]|string $source
+     */
+    public function makeExpression(
+        array|string|null $source,
+        string $separator = ' ',
+        ?\Closure $formatted = null,
+        ?string $prefix = null,
+        ?string $suffix = null
+    ): Expression {
+        if (empty($source)) {
+            return new Expression('');
+        }
+
+        $builder = new ExpressionBuilder($prefix, $suffix, $separator);
+
+        if (is_string($source)) {
+            return $builder->add($source)->get();
+        }
+
+        foreach ($source as $key => $item) {
+            if (empty($item)) {
+                continue;
+            }
+            if ($item instanceof Expression) {
+                $builder->add($item->getSql(), $item->getBindings());
+
+                continue;
+            }
+            if ($formatted) {
+                @[$sql, $binds] = $formatted($key, $item);
+                $builder->add($sql ?: '', $binds ?? []);
+
+                continue;
+            }
+            $item = is_array($item) ? $item : [$item];
+            if (is_string($key)) {
+                $builder->add("{$key} = ?", $item);
+
+                continue;
+            }
+            $builder->add("{$key}", $item);
+        }
+
+        return $builder->get();
     }
 }

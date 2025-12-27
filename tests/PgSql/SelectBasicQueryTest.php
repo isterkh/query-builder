@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Select;
+namespace Tests\PgSql;
 
 use Isterkh\QueryBuilder\Components\HavingClause;
 use Isterkh\QueryBuilder\Components\JoinClause;
@@ -38,9 +38,9 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             'empty array' => [[], 'select *'],
             'asterisk' => ['*', 'select *'],
             'array-asterisk' => [['*'], 'select *'],
-            'list' => [['a', 'b'], 'select `a`, `b`'],
-            'list-alias' => [['a', 'b as c'], 'select `a`, `b` as `c`'],
-            'list-array' => [['a', ['b', 'c']], 'select `a`, `b`, `c`'],
+            'list' => [['a', 'b'], 'select "a", "b"'],
+            'list-alias' => [['a', 'b as c'], 'select "a", "b" as "c"'],
+            'list-array' => [['a', ['b', 'c']], 'select "a", "b", "c"'],
         ];
     }
 
@@ -61,9 +61,9 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     public static function selectFromProvider(): array
     {
         return [
-            'table' => ['table', 'select * from `table`', null],
-            'table-alias' => ['table as t', 'select * from `table` as `t`', null],
-            'table-alias-param' => ['table', 'select * from `table` as `t`', 't'],
+            'table' => ['table', 'select * from "table"', null],
+            'table-alias' => ['table as t', 'select * from "table" as "t"', null],
+            'table-alias-param' => ['table', 'select * from "table" as "t"', 't'],
         ];
     }
 
@@ -76,7 +76,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->selectRaw($sql, $bindings)
             ->from('salaries')
         ;
-        $result = 'select ' . $sql . ' from `salaries`';
+        $result = 'select ' . $sql . ' from "salaries"';
         static::assertSame($result, $query->toSql());
         static::assertSame($bindings, $query->getBindings());
     }
@@ -99,7 +99,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
         ;
 
         static::assertSame(
-            'select distinct `a` from `table`',
+            'select distinct "a" from "table"',
             $query->toSql()
         );
         static::assertSame([], $query->getBindings());
@@ -124,7 +124,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
         ;
 
         static::assertStringEndsWith(
-            'inner join `t1` on `t`.`id` = `t1`.`t_id` left join `t2` on `t`.`id` = `t2`.`t_id` right join `t3` on `t`.`id` = `t3`.`t_id`',
+            'inner join "t1" on "t"."id" = "t1"."t_id" left join "t2" on "t"."id" = "t2"."t_id" right join "t3" on "t"."id" = "t3"."t_id"',
             $query->toSql()
         );
         static::assertEquals([], $query->getBindings());
@@ -143,7 +143,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             )
         ;
         static::assertStringEndsWith(
-            'inner join `t1` on (`t`.`name` = `t1`.`name` or `t`.`email` = `t1`.`email`) and (`t1`.`id` in (?, ?, ?) or `t1`.`pid` in (?, ?, ?))',
+            'inner join "t1" on ("t"."name" = "t1"."name" or "t"."email" = "t1"."email") and ("t1"."id" in (?, ?, ?) or "t1"."pid" in (?, ?, ?))',
             $query->toSql()
         );
         static::assertEquals([1, 2, 3, 1, 2, 3], $query->getBindings());
@@ -157,7 +157,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->rightJoin('t3', fn (JoinClause $join) => $join)
         ;
         static::assertSame(
-            'select * from `t` inner join `t1` left join `t2` right join `t3`',
+            'select * from "t" inner join "t1" left join "t2" right join "t3"',
             $query->toSql()
         );
     }
@@ -172,7 +172,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->orWhere('status', 'closed')
         ;
         static::assertStringEndsWith(
-            'where `is_paid` = ? and `category` != ? and (`created_at` > ? or `status` = ?)',
+            'where "is_paid" = ? and "category" != ? and ("created_at" > ? or "status" = ?)',
             $query->toSql()
         );
         static::assertSame([1, 'mobile', '2025-02-12', 'closed'], $query->getBindings());
@@ -193,7 +193,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->where('name', 'like', 'iphone%')
         ;
         static::assertStringEndsWith(
-            'where (`status` in (?, ?, ?, ?) and (`force` = ? or `manual` = ?)) and `name` like ?',
+            'where ("status" in (?, ?, ?, ?) and ("force" = ? or "manual" = ?)) and "name" like ?',
             $query->toSql()
         );
         static::assertSame([1, 2, 3, 4, 1, true, 'iphone%'], $query->getBindings());
@@ -218,7 +218,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->whereNotIn('department', [1, 2, 3, 4])
         ;
         static::assertStringEndsWith(
-            'where `status` in (?, ?) and `department` not in (?, ?, ?, ?)',
+            'where "status" in (?, ?) and "department" not in (?, ?, ?, ?)',
             $query->toSql()
         );
         static::assertSame(['active', 'pending', 1, 2, 3, 4], $query->getBindings());
@@ -231,7 +231,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->whereNotBetween('paid_at', '2025-04-01', '2025-05-01')
         ;
         static::assertStringEndsWith(
-            'where `created_at` between ? and ? and `paid_at` not between ? and ?',
+            'where "created_at" between ? and ? and "paid_at" not between ? and ?',
             $query->toSql()
         );
         static::assertSame(['2025-01-01', '2025-12-31', '2025-04-01', '2025-05-01'], $query->getBindings());
@@ -244,7 +244,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->whereRaw('')
         ;
         static::assertSame(
-            'select * from `t`',
+            'select * from "t"',
             $query->toSql()
         );
     }
@@ -258,7 +258,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->groupBy('c', 'd')
         ;
         static::assertStringEndsWith(
-            'group by `a`, `b`, `c`, `d`',
+            'group by "a", "b", "c", "d"',
             $q->toSql()
         );
     }
@@ -270,7 +270,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->groupBy('user_id')
         ;
         static::assertStringEndsWith(
-            'group by year(created_at), month(created_at), day(created_at), `user_id`',
+            'group by year(created_at), month(created_at), day(created_at), "user_id"',
             $q->toSql()
         );
     }
@@ -282,7 +282,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->groupByRaw('   ')
         ;
         static::assertSame(
-            'select * from `t`',
+            'select * from "t"',
             $q->toSql()
         );
     }
@@ -297,7 +297,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->orHaving('status', 'closed')
         ;
         static::assertStringEndsWith(
-            'having `is_paid` = ? and `category` != ? and (`created_at` > ? or `status` = ?)',
+            'having "is_paid" = ? and "category" != ? and ("created_at" > ? or "status" = ?)',
             $query->toSql()
         );
         static::assertSame([1, 'mobile', '2025-02-12', 'closed'], $query->getBindings());
@@ -318,7 +318,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->having('name', 'like', 'iphone%')
         ;
         static::assertStringEndsWith(
-            'having (`status` in (?, ?, ?, ?) and (`force` = ? or `manual` = ?)) and `name` like ?',
+            'having ("status" in (?, ?, ?, ?) and ("force" = ? or "manual" = ?)) and "name" like ?',
             $query->toSql()
         );
         static::assertSame([1, 2, 3, 4, 1, true, 'iphone%'], $query->getBindings());
@@ -345,7 +345,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->havingRaw('   ')
         ;
         static::assertStringEndsWith(
-            'where `id` > ? group by `id`',
+            'where "id" > ? group by "id"',
             $q->toSql()
         );
         static::assertSame([10], $q->getBindings());
@@ -359,7 +359,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->orderBy('b', 'desc')
         ;
         static::assertStringEndsWith(
-            'order by `a` asc, `b` desc',
+            'order by "a" asc, "b" desc',
             $q->toSql()
         );
     }
@@ -372,7 +372,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->orderBy('a', 'desc')
         ;
         static::assertStringEndsWith(
-            'order by `a` desc, `b` desc',
+            'order by "a" desc, "b" desc',
             $q->toSql()
         );
     }
@@ -394,7 +394,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->orderByRaw('   ', [1, 2, 3])
         ;
         static::assertSame(
-            'select * from `t`',
+            'select * from "t"',
             $q->toSql()
         );
     }
@@ -406,7 +406,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->limit(5)
         ;
         static::assertSame(
-            'select * from `t` limit 5',
+            'select * from "t" limit 5',
             $q->toSql()
         );
     }
@@ -426,7 +426,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
             ->offset(5)
         ;
         static::assertSame(
-            'select * from `t` offset 5',
+            'select * from "t" offset 5',
             $q->toSql()
         );
     }
