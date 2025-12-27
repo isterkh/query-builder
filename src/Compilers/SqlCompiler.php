@@ -6,16 +6,14 @@ namespace Isterkh\QueryBuilder\Compilers;
 
 use Isterkh\QueryBuilder\Clauses\JoinClause;
 use Isterkh\QueryBuilder\Clauses\UnionClause;
-use Isterkh\QueryBuilder\Compilers\MySql\ConditionsCompiler;
-use Isterkh\QueryBuilder\Compilers\MySql\Traits\BasicCompilerTrait;
+use Isterkh\QueryBuilder\Compilers\Traits\BasicCompilerTrait;
 use Isterkh\QueryBuilder\Compilers\Traits\CompilesConditionsTrait;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
-use Isterkh\QueryBuilder\Exceptions\CompilerDoesNotSupportsQuery;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Expressions\Expression;
-use Isterkh\QueryBuilder\QB;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
+use Isterkh\QueryBuilder\QueryBuilder;
 use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class SqlCompiler implements CompilerInterface
@@ -36,7 +34,7 @@ class SqlCompiler implements CompilerInterface
     /**
      * @param SelectQuery $query
      */
-    public function compile(QB $query): Expression
+    public function compile(QueryBuilder $query): Expression
     {
         $cte = $this->compileCte($query);
 
@@ -78,7 +76,7 @@ class SqlCompiler implements CompilerInterface
         return $table;
     }
 
-    protected function compileUnions(QB $query): ?Expression
+    protected function compileUnions(QueryBuilder $query): ?Expression
     {
         if (empty($query->getUnions())) {
             return null;
@@ -100,12 +98,12 @@ class SqlCompiler implements CompilerInterface
         return "{$operator} ({$union->getQuery()->toSql()})";
     }
 
-    protected function compileCte(QB $query): ?Expression
+    protected function compileCte(QueryBuilder $query): ?Expression
     {
         return $this->makeExpression(
             source: $query->getCte()?->getQueries(),
             separator: ', ',
-            formatted: fn (string $alias, QB $query) => [
+            formatted: fn (string $alias, QueryBuilder $query) => [
                 "{$this->wrap($alias)} as ({$query->toSql()})",
                 $query->getBindings(),
             ],
@@ -113,7 +111,7 @@ class SqlCompiler implements CompilerInterface
         );
     }
 
-    protected function compileSelect(QB $query): ?Expression
+    protected function compileSelect(QueryBuilder $query): ?Expression
     {
         if (empty($query->getTable())) {
             throw new CompilerException('Missing from clause');
@@ -133,7 +131,7 @@ class SqlCompiler implements CompilerInterface
         );
     }
 
-    protected function compileWhere(QB $query): ?Expression
+    protected function compileWhere(QueryBuilder $query): ?Expression
     {
         if (empty($query->getWhere())) {
             return null;
@@ -144,7 +142,7 @@ class SqlCompiler implements CompilerInterface
             ;
     }
 
-    protected function compileJoins(QB $query): ?Expression
+    protected function compileJoins(QueryBuilder $query): ?Expression
     {
         return $this->makeExpression(
             source: $query->getJoins(),
@@ -168,7 +166,7 @@ class SqlCompiler implements CompilerInterface
         return ["{$sql} on {$conditions->getSql()}", $conditions->getBindings()];
     }
 
-    protected function compileHaving(QB $query): ?Expression
+    protected function compileHaving(QueryBuilder $query): ?Expression
     {
         if (empty($query->getHaving())) {
             return null;
@@ -177,7 +175,7 @@ class SqlCompiler implements CompilerInterface
         return $this->conditionsCompiler->compile($query->getHaving()->getConditions())->prefix('having ');
     }
 
-    protected function compileLimit(QB $query, bool $union = false): ?Expression
+    protected function compileLimit(QueryBuilder $query, bool $union = false): ?Expression
     {
         $limit = $union ? $query->getUnionLimit() : $query->getLimit();
         if (null === $limit) {
@@ -187,7 +185,7 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression("limit {$limit}");
     }
 
-    protected function compileOffset(QB $query, bool $union = false): ?Expression
+    protected function compileOffset(QueryBuilder $query, bool $union = false): ?Expression
     {
         $offset = $union ? $query->getUnionOffset() : $query->getOffset();
         if (null === $offset || $offset <= 0) {
@@ -197,7 +195,7 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression("offset {$offset}");
     }
 
-    protected function compileOrderBy(QB $query, bool $union = false): ?Expression
+    protected function compileOrderBy(QueryBuilder $query, bool $union = false): ?Expression
     {
         $orderBy = $union ? $query->getUnionOrderBy() : $query->getOrderBy();
 
@@ -209,7 +207,7 @@ class SqlCompiler implements CompilerInterface
         );
     }
 
-    protected function compileGroupBy(QB $query): ?Expression
+    protected function compileGroupBy(QueryBuilder $query): ?Expression
     {
         return $this->makeExpression(
             source: $query->getGroupBy(),

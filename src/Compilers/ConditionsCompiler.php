@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Compilers\MySql;
+namespace Isterkh\QueryBuilder\Compilers;
 
-use Isterkh\QueryBuilder\Compilers\MySql\Traits\MakeExpressionTrait;
-use Isterkh\QueryBuilder\Compilers\MySql\Traits\WrapColumnsTrait;
+use Isterkh\QueryBuilder\Compilers\Traits\MakeExpressionTrait;
+use Isterkh\QueryBuilder\Compilers\Traits\WrapColumnsTrait;
 use Isterkh\QueryBuilder\Condition\Condition;
 use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;

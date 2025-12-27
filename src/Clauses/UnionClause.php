@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Clauses;
 
-use Isterkh\QueryBuilder\QB;
+use Isterkh\QueryBuilder\QueryBuilder;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
 
 class UnionClause
 {
     public function __construct(
-        protected QB $query,
-        protected bool $isAll = false
+        protected QueryBuilder $query,
+        protected bool         $isAll = false
     ) {}
 
-    public function getQuery(): QB
+    public function getQuery(): QueryBuilder
     {
         return $this->query;
     }
