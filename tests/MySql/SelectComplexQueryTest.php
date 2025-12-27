@@ -18,7 +18,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
     // union
     public function testUnion(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->where('a', 10)
             ->union(
                 fn (QueryBuilder $q) => $q->select('*')
@@ -35,7 +35,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
 
     public function testUnionAll(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->where('a', 10)
             ->unionAll(
                 fn (QueryBuilder $q) => $q->select('*')
@@ -52,7 +52,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
 
     public function testNestedUnion(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->where('a', 10)
             ->union(
                 fn (QueryBuilder $q) => $q->select('*')
@@ -77,7 +77,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
         $this->expectException(CompilerException::class);
         $this->expectExceptionMessage('Missing from clause');
 
-        $this->query
+        $this->selectQuery
             ->where('a', 10)
             ->union(fn (QueryBuilder $q) => $q)
             ->toSql()
@@ -86,7 +86,7 @@ class SelectComplexQueryTest extends SelectQueryTestTemplate
 
     public function testUnionWithOrderLimitOffset(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->orderBy('a')
             ->limit(10)
             ->offset(10)

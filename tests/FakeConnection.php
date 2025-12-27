@@ -13,9 +13,7 @@ class FakeConnection implements ConnectionInterface
 {
     public function __construct(
         protected Compiler $compiler,
-    )
-    {
-    }
+    ) {}
 
     public function query(QueryBuilder $query): iterable
     {

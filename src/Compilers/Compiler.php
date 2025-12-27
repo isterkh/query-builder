@@ -24,9 +24,6 @@ class Compiler
 
     public function compile(QueryBuilder $query): Expression
     {
-        if (empty($query->getTable())) {
-            throw new CompilerException('Missing from clause');
-        }
         $method = 'compile' . ucfirst($query->getType()->value);
         if (!method_exists($this, $method)) {
             throw new CompilerException('Cannot compile query: ' . $query->getType()->value);
@@ -150,16 +147,22 @@ class Compiler
         );
     }
 
-    protected function compileRaw(QueryBuilder $query): Expression {}
-
-    protected function compileTable(TableReference $from): string
+    protected function compileRaw(QueryBuilder $query): Expression
     {
-        $table = $this->wrap($from->getTable());
-        if (!empty($from->getAlias())) {
-            $table .= (' as ' . $this->wrap($from->getAlias()));
+        return $query->getRaw() ?? new Expression('');
+    }
+
+    protected function compileTable(?TableReference $table): string
+    {
+        if ($table === null) {
+            throw new CompilerException('Missing from clause');
+        }
+        $result = $this->wrap($table->getTable());
+        if (!empty($table->getAlias())) {
+            $result .= (' as ' . $this->wrap($table->getAlias()));
         }
 
-        return $table;
+        return $result;
     }
 
     protected function compileUnions(QueryBuilder $query): ?Expression

@@ -118,7 +118,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // JOINS
     public function testBasicJoins(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->join('t1', fn (JoinClause $join) => $join->on('t.id', 't1.t_id'))
             ->leftJoin('t2', fn (JoinClause $join) => $join->on('t.id', 't2.t_id'))
             ->rightJoin('t3', fn (JoinClause $join) => $join->on('t.id', 't3.t_id'))
@@ -133,7 +133,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testConditionalJoins(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->join(
                 't1',
                 fn (JoinClause $join) => $join
@@ -152,7 +152,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testEmptyJoins(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->join('t1', fn (JoinClause $join) => $join->where(fn (JoinClause $w) => $w))
             ->leftJoin('t2', fn (JoinClause $join) => $join)
             ->rightJoin('t3', fn (JoinClause $join) => $join)
@@ -166,7 +166,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // WHERE
     public function testWhereBasic(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->where('is_paid', 1)
             ->where('category', '!=', 'mobile')
             ->where('created_at', '>', '2025-02-12')
@@ -181,7 +181,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testWhereNested(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->where(
                 static fn (WhereClause $w) => $w
                     ->where('status', 'in', [1, 2, 3, 4])
@@ -202,7 +202,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testWhereRaw(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->whereRaw('  status = ? and (force = ? or manual = ?) and YEAR(created_at) = ?  ', ['paid', 1, 1, 2025])
         ;
         static::assertStringEndsWith(
@@ -214,7 +214,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testWhereIn(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->whereIn('status', ['active', 'pending'])
             ->whereNotIn('department', [1, 2, 3, 4])
         ;
@@ -227,7 +227,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testWhereBetween(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->whereBetween('created_at', '2025-01-01', '2025-12-31')
             ->whereNotBetween('paid_at', '2025-04-01', '2025-05-01')
         ;
@@ -240,7 +240,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testWhereEmpty(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->where(static fn (WhereClause $w) => $w)
             ->whereRaw('')
         ;
@@ -253,7 +253,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // GROUP
     public function testGroupBy(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->groupBy('a', 'b', 'c')
             ->groupBy('a', 'b')
             ->groupBy('c', 'd')
@@ -266,7 +266,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testGroupByRaw(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->groupByRaw('   year(created_at), month(created_at), day(created_at)   ')
             ->groupBy('user_id')
         ;
@@ -278,7 +278,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testGroupByEmpty(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->groupBy()
             ->groupByRaw('   ')
         ;
@@ -291,7 +291,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // HAVING
     public function testHavingBasic(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->having('is_paid', 1)
             ->having('category', '!=', 'mobile')
             ->having('created_at', '>', '2025-02-12')
@@ -306,7 +306,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testHavingNested(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->having(
                 static fn (HavingClause $h) => $h
                     ->having('status', 'in', [1, 2, 3, 4])
@@ -327,7 +327,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testHavingRaw(): void
     {
-        $query = $this->query
+        $query = $this->selectQuery
             ->havingRaw('  count(user_id) = ? and YEAR(max_date) = ?', ['paid', 1, 1, 2025])
         ;
         static::assertStringEndsWith(
@@ -339,7 +339,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testHavingEmpty(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->where('id', '>', 10)
             ->groupBy('id')
             ->having(fn (HavingClause $h) => $h)
@@ -355,7 +355,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // ORDER
     public function testBasicOrderBy(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->orderBy('a')
             ->orderBy('b', 'desc')
         ;
@@ -367,7 +367,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testOrderByOverride(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->orderBy('a')
             ->orderBy('b', 'desc')
             ->orderBy('a', 'desc')
@@ -380,7 +380,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testOrderByRaw(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->orderByRaw('  rand()   ')
         ;
         static::assertStringEndsWith(
@@ -391,7 +391,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
 
     public function testOrderByEmpty(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->orderByRaw('   ', [1, 2, 3])
         ;
         static::assertSame(
@@ -403,7 +403,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     // LIMIT OFFSET
     public function testBasicLimit(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->limit(5)
         ;
         static::assertSame(
@@ -416,14 +416,14 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     {
         $this->expectException(QueryBuilderException::class);
         $this->expectExceptionMessage('Limit should be greater than 0');
-        $q = $this->query
+        $q = $this->selectQuery
             ->limit(-5)
         ;
     }
 
     public function testBasicOffset(): void
     {
-        $q = $this->query
+        $q = $this->selectQuery
             ->offset(5)
         ;
         static::assertSame(
@@ -436,7 +436,7 @@ class SelectBasicQueryTest extends SelectQueryTestTemplate
     {
         $this->expectException(QueryBuilderException::class);
         $this->expectExceptionMessage('Offset should be greater than 0');
-        $this->query
+        $this->selectQuery
             ->offset(-5)
         ;
     }
