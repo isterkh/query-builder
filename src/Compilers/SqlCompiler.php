@@ -11,6 +11,7 @@ use Isterkh\QueryBuilder\Components\JoinClause;
 use Isterkh\QueryBuilder\Components\TableReference;
 use Isterkh\QueryBuilder\Components\UnionClause;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
+use Isterkh\QueryBuilder\Contracts\GrammarInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
@@ -19,12 +20,12 @@ use Isterkh\QueryBuilder\QueryBuilder;
 class SqlCompiler implements CompilerInterface
 {
     use BasicCompilerTrait;
+    use CompilesConditionsTrait;
 
-    protected ConditionsCompiler $conditionsCompiler;
-    public function __construct()
-    {
-        $this->conditionsCompiler = new ConditionsCompiler();
-    }
+    public function __construct(
+        protected GrammarInterface $grammar,
+    )
+    {}
 
     public function supports(QueryInterface $query): bool
     {
@@ -84,7 +85,7 @@ class SqlCompiler implements CompilerInterface
 
         return $this->makeExpression(
             source: $query->getUnions(),
-            formatted: fn (int $key, UnionClause $item) => [
+            formatted: fn(int $key, UnionClause $item) => [
                 $this->unionClauseToSql($item),
                 $item->getQuery()->getBindings(),
             ]
@@ -103,7 +104,7 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression(
             source: $query->getCte()?->getQueries(),
             separator: ', ',
-            formatted: fn (string $alias, QueryBuilder $query) => [
+            formatted: fn(string $alias, QueryBuilder $query) => [
                 "{$this->wrap($alias)} as ({$query->toSql()})",
                 $query->getBindings(),
             ],
@@ -125,7 +126,7 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression(
             source: empty($query->getColumns()) ? '*' : $query->getColumns(),
             separator: ', ',
-            formatted: fn ($key, $item) => [$this->wrap(is_string($key) ? "{$key} as {$item}" : "{$item}")],
+            formatted: fn($key, $item) => [$this->wrap(is_string($key) ? "{$key} as {$item}" : "{$item}")],
             prefix: $prefix,
             suffix: $suffix,
         );
@@ -137,16 +138,15 @@ class SqlCompiler implements CompilerInterface
             return null;
         }
 
-        return $this->conditionsCompiler->compile($query->getWhere()->getConditions())
-            ->prefix('where ')
-            ;
+        return $this->compileConditions($query->getWhere()->getConditions())
+            ->prefix('where ');
     }
 
     protected function compileJoins(QueryBuilder $query): ?Expression
     {
         return $this->makeExpression(
             source: $query->getJoins(),
-            formatted: fn (int $key, JoinClause $join) => $this->joinToArray($join)
+            formatted: fn(int $key, JoinClause $join) => $this->joinToArray($join)
         );
     }
 
@@ -155,7 +155,7 @@ class SqlCompiler implements CompilerInterface
      */
     protected function joinToArray(JoinClause $join): array
     {
-        $conditions = $this->conditionsCompiler->compile($join->getConditions());
+        $conditions = $this->compileConditions($join->getConditions());
         $type = $join->getType()->value;
         $table = $this->compileTable($join->getFrom());
         $sql = "{$type} join {$table}";
@@ -172,7 +172,7 @@ class SqlCompiler implements CompilerInterface
             return null;
         }
 
-        return $this->conditionsCompiler->compile($query->getHaving()->getConditions())->prefix('having ');
+        return $this->compileConditions($query->getHaving()->getConditions())->prefix('having ');
     }
 
     protected function compileLimit(QueryBuilder $query, bool $union = false): ?Expression
@@ -202,7 +202,7 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression(
             source: $orderBy,
             separator: ', ',
-            formatted: fn ($key, $dir) => ["{$this->wrap($key)} {$dir}"],
+            formatted: fn($key, $dir) => ["{$this->wrap($key)} {$dir}"],
             prefix: 'order by ',
         );
     }
@@ -212,8 +212,33 @@ class SqlCompiler implements CompilerInterface
         return $this->makeExpression(
             source: $query->getGroupBy(),
             separator: ', ',
-            formatted: fn ($key, $dir) => ["{$this->wrap($key)}"],
+            formatted: fn($key, $dir) => ["{$this->wrap($key)}"],
             prefix: 'group by ',
         );
+    }
+
+    protected function wrap(int|string $value): string
+    {
+        if (is_int($value)) {
+            return (string)$value;
+        }
+
+        $split = preg_split('/\s+(as)\s+/i', $value, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+        if (false === $split) {
+            return $this->grammar->wrap($value);
+        }
+        $split = array_slice($split, 0, 3);
+        $ignore = ['*', 'as', 'AS'];
+        $parts = [];
+        foreach ($split as $part) {
+            if (in_array($part, $ignore)) {
+                $parts[] = $part;
+
+                continue;
+            }
+            $parts[] = implode('.', array_map(fn($p) => $this->grammar->wrap($p), explode('.', $part)));
+        }
+
+        return implode(' ', $parts);
     }
 }

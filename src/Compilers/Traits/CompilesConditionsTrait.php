@@ -2,20 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Compilers;
+namespace Isterkh\QueryBuilder\Compilers\Traits;
 
-use Isterkh\QueryBuilder\Compilers\Traits\MakeExpressionTrait;
-use Isterkh\QueryBuilder\Compilers\Traits\WrapColumnsTrait;
 use Isterkh\QueryBuilder\Components\Condition;
 use Isterkh\QueryBuilder\Components\ConditionGroup;
 use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Exceptions\UnsupportedOperatorException;
 
-class ConditionsCompiler
+trait CompilesConditionsTrait
 {
-    use WrapColumnsTrait;
-    use MakeExpressionTrait;
 
     /**
      * @var array|string[]
@@ -32,10 +28,10 @@ class ConditionsCompiler
      * @var array|string[]
      */
     protected array $specialHandlers = [
-        'in' => 'compileIn',
-        'not in' => 'compileIn',
-        'between' => 'compileBetween',
-        'not between' => 'compileBetween',
+        'in' => 'compileInCondition',
+        'not in' => 'compileInCondition',
+        'between' => 'compileBetweenCondition',
+        'not between' => 'compileBetweenCondition',
     ];
 
     /**
@@ -46,7 +42,7 @@ class ConditionsCompiler
     ];
 
     // TODO: Сделать адекватнее проверку на пустые условия.
-    public function compile(ConditionGroup $conditionGroup): Expression
+    protected function compileConditions(ConditionGroup $conditionGroup): Expression
     {
         return $this->makeExpression(
             source: $conditionGroup->getConditions(),
@@ -65,7 +61,7 @@ class ConditionsCompiler
             return $condition->toArray();
         }
         if ($condition instanceof ConditionGroup) {
-            return $this->compile($condition)->wrap()->toArray();
+            return $this->compileConditions($condition)->wrap()->toArray();
         }
 
         return $this->compileSingleCondition($condition)->toArray();
@@ -89,7 +85,7 @@ class ConditionsCompiler
         );
 
         if (null === $value && in_array($operator, $this->exactEqualityOperators, true)) {
-            return $this->compileNull($preparedCondition);
+            return $this->compileNullCondition($preparedCondition);
         }
 
         if (!empty($this->specialHandlers[$operator])) {
@@ -101,17 +97,17 @@ class ConditionsCompiler
             return $this->{$handler}($preparedCondition);
         }
 
-        return $this->compileDefault($preparedCondition);
+        return $this->compileDefaultCondition($preparedCondition);
     }
 
-    protected function compileNull(Condition $condition): Expression
+    protected function compileNullCondition(Condition $condition): Expression
     {
         $operator = '=' === $condition->getOperator() ? 'is' : 'is not';
 
         return new Expression("{$condition->getColumn()} {$operator} null");
     }
 
-    protected function compileBetween(Condition $condition): Expression
+    protected function compileBetweenCondition(Condition $condition): Expression
     {
         $value = $condition->getValue();
         if (2 !== count($value)) {
@@ -129,7 +125,7 @@ class ConditionsCompiler
         );
     }
 
-    protected function compileIn(Condition $condition): Expression
+    protected function compileInCondition(Condition $condition): Expression
     {
         $value = $condition->getValue();
         if (empty($value)) {
@@ -143,7 +139,7 @@ class ConditionsCompiler
         );
     }
 
-    protected function compileDefault(Condition $condition): Expression
+    protected function compileDefaultCondition(Condition $condition): Expression
     {
         if ($condition->isRightIsColumn()) {
             return new Expression(

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests;
 
+use Isterkh\QueryBuilder\Compilers\Grammar\MySqlGrammar;
 use Isterkh\QueryBuilder\Compilers\SqlCompiler;
 use Isterkh\QueryBuilder\QueryBuilder;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,7 @@ abstract class QueryTestTemplate extends TestCase
 
         $this->builder = new QueryBuilder(
           new FakeConnection(
-              new SqlCompiler()
+              new SqlCompiler(new MySqlGrammar())
           ),
         );
     }
