@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Connection;
+namespace Isterkh\QueryBuilder;
 
 use Isterkh\QueryBuilder\Compilers\Compiler;
 use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
-use Isterkh\QueryBuilder\QueryBuilder;
 
-class PdoConnection implements ConnectionInterface
+class Connection implements ConnectionInterface
 {
     public function __construct(
         protected Compiler $compiler,
