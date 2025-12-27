@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Expressions;
+namespace Isterkh\QueryBuilder\Components;
 
 class ExpressionBuilder
 {

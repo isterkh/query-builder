@@ -6,11 +6,11 @@ namespace Isterkh\QueryBuilder\Compilers;
 
 use Isterkh\QueryBuilder\Compilers\Traits\MakeExpressionTrait;
 use Isterkh\QueryBuilder\Compilers\Traits\WrapColumnsTrait;
-use Isterkh\QueryBuilder\Condition\Condition;
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
+use Isterkh\QueryBuilder\Components\Condition;
+use Isterkh\QueryBuilder\Components\ConditionGroup;
+use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Exceptions\UnsupportedOperatorException;
-use Isterkh\QueryBuilder\Expressions\Expression;
 
 class ConditionsCompiler
 {

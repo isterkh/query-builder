@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Traits;
 
-use Isterkh\QueryBuilder\Clauses\WhereClause;
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
+use Isterkh\QueryBuilder\Components\ConditionGroup;
+use Isterkh\QueryBuilder\Components\WhereClause;
 
 trait HasWhereTrait
 {

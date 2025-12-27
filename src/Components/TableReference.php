@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\ValueObjects;
+namespace Isterkh\QueryBuilder\Components;
 
 class TableReference
 {

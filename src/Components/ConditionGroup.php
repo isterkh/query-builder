@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Condition;
-
-use Isterkh\QueryBuilder\Expressions\Expression;
+namespace Isterkh\QueryBuilder\Components;
 
 class ConditionGroup
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Condition;
+namespace Isterkh\QueryBuilder\Components;
 
 class Condition
 {

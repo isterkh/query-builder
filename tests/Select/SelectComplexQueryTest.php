@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Select;
 
-use Isterkh\QueryBuilder\Clauses\JoinClause;
+use Isterkh\QueryBuilder\Components\JoinClause;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 
 use Isterkh\QueryBuilder\QueryBuilder;

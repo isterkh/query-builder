@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers;
 
-use Isterkh\QueryBuilder\Clauses\JoinClause;
-use Isterkh\QueryBuilder\Clauses\UnionClause;
 use Isterkh\QueryBuilder\Compilers\Traits\BasicCompilerTrait;
 use Isterkh\QueryBuilder\Compilers\Traits\CompilesConditionsTrait;
+use Isterkh\QueryBuilder\Components\Expression;
+use Isterkh\QueryBuilder\Components\JoinClause;
+use Isterkh\QueryBuilder\Components\TableReference;
+use Isterkh\QueryBuilder\Components\UnionClause;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
-use Isterkh\QueryBuilder\Expressions\Expression;
 use Isterkh\QueryBuilder\Queries\SelectQuery;
 use Isterkh\QueryBuilder\QueryBuilder;
-use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class SqlCompiler implements CompilerInterface
 {

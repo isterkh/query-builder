@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Clauses;
+namespace Isterkh\QueryBuilder\Components;
 
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
 use Isterkh\QueryBuilder\QueryBuilder;

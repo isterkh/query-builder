@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Contracts;
 
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
+use Isterkh\QueryBuilder\Components\ConditionGroup;
 
 interface HasConditionInterface
 {

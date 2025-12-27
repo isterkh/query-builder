@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Traits;
 
-use Isterkh\QueryBuilder\Clauses\HavingClause;
-use Isterkh\QueryBuilder\Clauses\JoinClause;
-use Isterkh\QueryBuilder\Clauses\UnionClause;
-use Isterkh\QueryBuilder\Clauses\WithClause;
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
+use Isterkh\QueryBuilder\Components\ConditionGroup;
+use Isterkh\QueryBuilder\Components\Expression;
+use Isterkh\QueryBuilder\Components\HavingClause;
+use Isterkh\QueryBuilder\Components\JoinClause;
+use Isterkh\QueryBuilder\Components\TableReference;
+use Isterkh\QueryBuilder\Components\UnionClause;
+use Isterkh\QueryBuilder\Components\WithClause;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
-use Isterkh\QueryBuilder\Expressions\Expression;
-use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 trait QueryComponentsTrait
 {

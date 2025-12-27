@@ -2,9 +2,8 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Clauses;
+namespace Isterkh\QueryBuilder\Components;
 
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
 

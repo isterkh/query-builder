@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Contracts;
 
-use Isterkh\QueryBuilder\Clauses\WhereClause;
+use Isterkh\QueryBuilder\Components\WhereClause;
 
 interface HasWhereInterface
 {

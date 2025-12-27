@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Traits;
 
+use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
-use Isterkh\QueryBuilder\Expressions\Expression;
 
 trait QueryConnectionTrait
 {

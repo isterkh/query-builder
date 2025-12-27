@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Connection;
 
+use Isterkh\QueryBuilder\Components\Expression;
 use Isterkh\QueryBuilder\Contracts\CompilerInterface;
 use Isterkh\QueryBuilder\Contracts\ConnectionInterface;
 use Isterkh\QueryBuilder\Contracts\LazyQueryInterface;
 use Isterkh\QueryBuilder\Contracts\QueryInterface;
-use Isterkh\QueryBuilder\Expressions\Expression;
 
 class PdoConnection implements ConnectionInterface
 {

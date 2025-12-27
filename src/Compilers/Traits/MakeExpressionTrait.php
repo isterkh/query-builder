@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Isterkh\QueryBuilder\Compilers\Traits;
 
-use Isterkh\QueryBuilder\Expressions\Expression;
-use Isterkh\QueryBuilder\Expressions\ExpressionBuilder;
+use Isterkh\QueryBuilder\Components\Expression;
+use Isterkh\QueryBuilder\Components\ExpressionBuilder;
 
 trait MakeExpressionTrait
 {

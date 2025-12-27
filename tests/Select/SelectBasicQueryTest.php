@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Select;
 
-use Isterkh\QueryBuilder\Clauses\HavingClause;
-use Isterkh\QueryBuilder\Clauses\JoinClause;
-use Isterkh\QueryBuilder\Clauses\WhereClause;
+use Isterkh\QueryBuilder\Components\HavingClause;
+use Isterkh\QueryBuilder\Components\JoinClause;
+use Isterkh\QueryBuilder\Components\WhereClause;
 use Isterkh\QueryBuilder\Exceptions\CompilerException;
 use Isterkh\QueryBuilder\Exceptions\QueryBuilderException;
 use PHPUnit\Framework\Attributes\DataProvider;

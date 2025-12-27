@@ -2,14 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Isterkh\QueryBuilder\Clauses;
+namespace Isterkh\QueryBuilder\Components;
 
-use Isterkh\QueryBuilder\Condition\ConditionGroup;
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Enum\JoinTypeEnum;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
 use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
-use Isterkh\QueryBuilder\ValueObjects\TableReference;
 
 class JoinClause implements HasConditionInterface
 {
