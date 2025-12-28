@@ -122,9 +122,11 @@ class Compiler
 
     protected function compileDelete(QueryBuilder $query): Expression
     {
+
         $table = $this->compileTable($query->getTable());
 
         return $this->makeExpression([
+            $this->compileCte($query),
             new Expression("delete from {$table}"),
             $this->compileWhere($query),
         ]);

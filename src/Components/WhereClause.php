@@ -6,10 +6,12 @@ namespace Isterkh\QueryBuilder\Components;
 
 use Isterkh\QueryBuilder\Contracts\HasConditionInterface;
 use Isterkh\QueryBuilder\Traits\HasConditionTrait;
+use Isterkh\QueryBuilder\Traits\WhereAliasTrait;
 
 class WhereClause implements HasConditionInterface
 {
     use HasConditionTrait;
+    use WhereAliasTrait;
 
     public function __construct(
         protected ConditionGroup $conditions
