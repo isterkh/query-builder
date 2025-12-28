@@ -213,7 +213,7 @@ $builder
     ->execute()
 ```
 
-### Transaction
+### Transactions
 ```php
 $builder->getConnection()->beginTransaction();
 $builder->getConnection()->commit();
