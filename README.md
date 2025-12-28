@@ -166,9 +166,16 @@ with `cte` as (select id, dense_rank() over(partition by salary) as rnk from `em
 ```
 
 ### Executing
-There are two basic methods: `get()` for fetching data and `execute()` to run some command and get number of affected rows.
-If `lazy()` is called before `get()` then generator will be returned. `lazy()` by itself does not execute the query,
-you still need to call `get()` to execute the query.
+**Basic methods**
+
+- `get()` — fetch data.
+- `execute()` — run a command and return the number of affected rows.
+
+**Additional methods**
+
+- `lazy()` — for lazy querying: calling `get()` will return a generator instead of the full result set.
+
+**Note:** `lazy()` itself does not execute the query; you must call `get()` to run it.
 
 ### Update/Delete/Insert
 Only simple queries are supported.
