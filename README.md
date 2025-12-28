@@ -220,7 +220,12 @@ $builder->getConnection()->rollback();
 
 ## Low Level setup
 Instead of using `QueryBuilderFactory` you can manually create required objects:
+
 ```php
+use Isterkh\QueryBuilder\Compilers\Compiler;
+use Isterkh\QueryBuilder\Compilers\Grammar\MySqlGrammar;
+use Isterkh\QueryBuilder\Connection;
+use Isterkh\QueryBuilder\QueryBuilder;
 $compiler = new Compiler(new MySqlGrammar())
 $connection = new Connection($compiler, new PDO(...))
 $builder = new QueryBuilder($connection);
