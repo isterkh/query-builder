@@ -66,8 +66,8 @@ $builder->select()
 ```mysql
 select * from `a` inner join `b` on `a`.`id` = `b`.`id` and (`a`.`column1` > `b`.`column1` or `a`.`column2` < `b`.`column2`) and (`a`.`age` > ? or `a`.`some_flag` = ?)
 ```
-For column comparison use `on` method - value is assumed to be a column name, therefore not replaced with ? placeholder
-For direct comparison use `where` method - value will be replaced with ? placeholder. 
+- **`on()`**: Column-to-column comparison (no parameterization)
+- **`where()`**: Column-to-value comparison (values are parameterized)
 
 ### Where
 
@@ -172,8 +172,11 @@ you still need to call `get()` to execute the query.
 
 ### Update/Delete/Insert
 Only simple queries are supported.
+
 The resulting SQL will contain only the CTE and WHERE clause (if present).
+
 The methods themselves do not execute the query. You need to call `execute` method to execute. 
+
 Batch insert is not supported for now. 
 ```php
 $builder
