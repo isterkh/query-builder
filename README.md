@@ -1,11 +1,11 @@
 # PHP Query Builder
 Dependency-free library for writing SQL queries.
-Supports raw queries, CTEs, joins, unions, nested conditions (where, having, join)
+Supports raw sql expressions, CTEs, joins, unions, nested conditions (where, having, join)
 
 Work in progress...
 
 ## Usage
-Create an instance using factory or manually:
+Create an instance using the factory or [manually](#low-level-setup):
 
 ```php
 use Isterkh\QueryBuilder\QueryBuilderFactory;
@@ -52,8 +52,6 @@ $builder->select('city')->distinct()->from('table') // select distinct `city` fr
 
 ### Joins
 ```php
-
-use Isterkh\QueryBuilder\Components\JoinClause;
 $builder->select()
     ->from('a')
     ->join('b', fn(JoinClause $join) => $join->on('a.id', 'b.id')
@@ -74,7 +72,6 @@ For direct comparison use `where` method - value will be replaced with ? placeho
 ### Where
 
 ```php
-use Isterkh\QueryBuilder\Components\WhereClause;
 $builder
     ->where('col', 'value')
     ->orWhere('col1', 'value1')
@@ -101,7 +98,6 @@ group by `a`, `b`, raw_expr
 ### Having
 Same as [where clause](#where), but methods are named `having` and `orHaving` respectively.
 ```php
-use Isterkh\QueryBuilder\Components\HavingClause;
 $builder
     ->havingRaw('count(*) > 10')
     ->having('column', 'value')
@@ -123,7 +119,7 @@ $builder->orderBy('a')
 order by `a` asc, `b` desc, count(*) desc
 ```
 
-### Limit offset
+### Limit/Offset
 ```php
 $builder->limit(5)->offset(5)
 ```
@@ -131,13 +127,11 @@ $builder->limit(5)->offset(5)
 limit 5 offset 5 
 ```
 ### Union
-Union/UnionAll changes the scope of limit/offset/order by:
+Union/UnionAll change the scope of limit/offset/order by:
 1. If called before `union()` then applied to the current select query
 2. If called after `union()` then applied to the union result
 
 ```php
-use Isterkh\QueryBuilder\QueryBuilder;
-
 $builder
     ->select()
     ->from('a')
@@ -159,8 +153,6 @@ $builder
 You can use [Common table expressions](https://dev.mysql.com/doc/refman/8.4/en/with.html)
 
 ```php
-
-use Isterkh\QueryBuilder\QueryBuilder;
 $builder
     ->with('cte', fn (QueryBuilder $q) => $q
         ->selectRaw('id, dense_rank() over(partition by salary) as rnk')
@@ -174,14 +166,14 @@ with `cte` as (select id, dense_rank() over(partition by salary) as rnk from `em
 ```
 
 ### Executing
-There are two basic methods: `get()` for fetching data and `execute` to run some command and get number of affected rows.
+There are two basic methods: `get()` for fetching data and `execute()` to run some command and get number of affected rows.
 If `lazy()` is called before `get()` then generator will be returned. `lazy()` by itself does not execute the query,
 you still need to call `get()` to execute the query.
 
 ### Update/Delete/Insert
-Only simple queries are supported. 
-Resulting SQL will contain only cte where (if present)
-Methods itself are not executing the query. You need to call `execute` method to execute. 
+Only simple queries are supported.
+The resulting SQL will contain only the CTE and WHERE clause (if present).
+The methods themselves do not execute the query. You need to call `execute` method to execute. 
 Batch insert is not supported for now. 
 ```php
 $builder
